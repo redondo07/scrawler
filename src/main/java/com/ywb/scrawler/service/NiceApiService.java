@@ -1,6 +1,12 @@
 package com.ywb.scrawler.service;
 
+import com.ywb.scrawler.model.NiceShoeListModel;
+
+import java.util.List;
+
 public interface NiceApiService {
 
-    String getListTab();
+    List<NiceShoeListModel> getProductList();
+
+    NiceShoeListModel getProductDetail(NiceShoeListModel model);
 }

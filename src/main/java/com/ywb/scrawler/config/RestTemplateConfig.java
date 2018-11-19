@@ -38,9 +38,9 @@ public class RestTemplateConfig {
         connectionManager.setDefaultMaxPerRoute(200);
 
         RequestConfig requestConfig = RequestConfig.custom()
-                .setSocketTimeout(1000)
-                .setConnectTimeout(1000)
-                .setConnectionRequestTimeout(1000)
+                .setSocketTimeout(3000)
+                .setConnectTimeout(3000)
+                .setConnectionRequestTimeout(3000)
                 .build();
 
         return HttpClientBuilder.create()
