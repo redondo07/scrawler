@@ -1,0 +1,163 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- slf4j日志配置文件 -->
+<configuration debug="true" scan="true" scanPeriod="30 seconds">
+
+    <!-- 设置日志输出根目录 -->
+    <springProfile name="dev">
+        <property name="log.dir" value="~/logs/scrawler"/>
+    </springProfile>
+    <springProfile name="qa">
+        <property name="log.dir" value="~/logs/scrawler"/>
+    </springProfile>
+    <springProfile name="prod">
+        <property name="log.dir" value="~/logs/scrawler"/>
+    </springProfile>
+    <springProfile name="pre">
+        <property name="log.dir" value="~/logs/scrawler"/>
+    </springProfile>
+
+    <property name="encoding" value="UTF-8"/>
+    <property name="normal-pattern" value="%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level [%thread] %logger{10}.%M:%L  %msg%n"/>
+    <property name="plain-pattern" value="%d{yyyy-MM-dd HH:mm:ss} %msg%n"/>
+    <property name="std-pattern" value="%d{HH:mm:ss.SSS}[%thread][%-5level] %msg %c:%L%n"/>
+
+    <appender name="errorAppender" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${log.dir}/error.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>${log.dir}/error.log.%d{yyyy-MM-dd}</fileNamePattern>
+            <maxHistory>120</maxHistory>
+        </rollingPolicy>
+        <encoder>
+            <pattern>[%-4level][%d{yyyy-MM-dd HH:mm:ss SSS}][%thread][%logger{35}:%line] %msg%n</pattern>
+        </encoder>
+        <filter class="ch.qos.logback.classic.filter.LevelFilter">
+            <level>ERROR</level>
+            <onMatch>ACCEPT</onMatch>
+            <onMismatch>DENY</onMismatch>
+        </filter>
+    </appender>
+
+    <appender name="warnAppender" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${log.dir}/warn.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>${log.dir}/warn.log.%d{yyyy-MM-dd}</fileNamePattern>
+            <maxHistory>120</maxHistory>
+        </rollingPolicy>
+        <encoder>
+            <pattern>[%-4level][%d{yyyy-MM-dd HH:mm:ss SSS}][%thread][%logger{35}:%line] %msg%n</pattern>
+        </encoder>
+        <filter class="ch.qos.logback.classic.filter.LevelFilter">
+            <level>WARN</level>
+            <onMatch>ACCEPT</onMatch>
+            <onMismatch>DENY</onMismatch>
+        </filter>
+    </appender>
+
+    <appender name="publicAppender" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${log.dir}/public.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>${log.dir}/public.log.%d{yyyy-MM-dd}</fileNamePattern>
+            <maxHistory>120</maxHistory>
+        </rollingPolicy>
+        <encoder>
+            <pattern>[%-4level][%d{yyyy-MM-dd HH:mm:ss SSS}][%thread][%logger{35}:%line] %msg%n</pattern>
+        </encoder>
+        <filter class="ch.qos.logback.classic.filter.LevelFilter"><!-- 只打印错误日志 -->
+            <level>INFO</level>
+            <onMatch>ACCEPT</onMatch>
+            <onMismatch>DENY</onMismatch>
+        </filter>
+    </appender>
+
+    <appender name="traceAppender" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${log.dir}/trace.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>${log.dir}/trace.log.%d{yyyy-MM-dd}</fileNamePattern>
+            <maxHistory>12</maxHistory>
+        </rollingPolicy>
+        <encoder>
+            <pattern>[%-4level][%d{yyyy-MM-dd HH:mm:ss SSS}][%thread][%logger{35}:%line] %msg%n</pattern>
+        </encoder>
+        <filter class="ch.qos.logback.classic.filter.LevelFilter">
+            <level>TRACE</level>
+            <onMatch>ACCEPT</onMatch>
+            <onMismatch>DENY</onMismatch>
+        </filter>
+    </appender>
+
+    <appender name="debugAppender" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${log.dir}/debug.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>${log.dir}/debug.log.%d{yyyy-MM-dd}</fileNamePattern>
+            <maxHistory>12</maxHistory>
+        </rollingPolicy>
+        <encoder>
+            <pattern>[%-4level][%d{yyyy-MM-dd HH:mm:ss SSS}][%thread][%logger{35}:%line] %msg%n</pattern>
+        </encoder>
+        <filter class="ch.qos.logback.classic.filter.LevelFilter">
+            <level>DEBUG</level>
+            <onMatch>ACCEPT</onMatch>
+            <onMismatch>DENY</onMismatch>
+        </filter>
+    </appender>
+
+    <appender name="feedbackAppender" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${log.dir}/feedback.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>${log.dir}/feedback.log.%d{yyyy-MM-dd_HH}</fileNamePattern>
+            <maxHistory>120</maxHistory>
+        </rollingPolicy>
+        <encoder>
+            <pattern>[%-4level][%d{yyyy-MM-dd HH:mm:ss SSS}][%thread][%logger{35}:%line] %msg%n</pattern>
+        </encoder>
+        <filter class="ch.qos.logback.classic.filter.LevelFilter"><!-- 只打印错误日志 -->
+            <level>INFO</level>
+            <onMatch>ACCEPT</onMatch>
+            <onMismatch>DENY</onMismatch>
+        </filter>
+    </appender>
+
+    <appender name="console" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
+            <charset>UTF-8</charset>
+        </encoder>
+    </appender>
+
+    <root level="debug">
+        <appender-ref ref="console" />
+    </root>
+
+    <logger name="com" level="warn" addivity="false">
+        <appender-ref ref="warnAppender"/>
+    </logger>
+
+    <logger name="com" level="error" addivity="false">
+        <appender-ref ref="errorAppender"/>
+    </logger>
+
+    <logger name="com" level="trace" addivity="false">
+        <appender-ref ref="traceAppender"/>
+    </logger>
+
+    <logger name="com" level="debug"  addivity="false">
+        <appender-ref ref="debugAppender" />
+    </logger>
+
+    <logger name="com" level="info"  addivity="false">
+        <appender-ref ref="publicAppender" />
+    </logger>
+
+    <logger name="org" level="error" additivity="false">
+        <appender-ref ref="errorAppender"/>
+    </logger>
+    
+    <logger name="org.mybatis.mapper" level="trace" additivity="false">
+        <appender-ref ref="traceAppender"/>
+    </logger>
+    
+	<logger name="org" level="error" additivity="false">
+        <appender-ref ref="errorAppender"/>
+    </logger>
+
+</configuration>
