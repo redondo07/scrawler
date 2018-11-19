@@ -1,9 +1,7 @@
 package com.ywb.scrawler.service.impl;
 
-import apple.laf.JRSUIConstants;
 import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
-import com.ywb.scrawler.SizeChartEnum;
+import com.ywb.scrawler.enums.SizeChartEnum;
 import com.ywb.scrawler.constants.CalculateConstants;
 import com.ywb.scrawler.model.*;
 import com.ywb.scrawler.service.NiceApiService;
@@ -40,6 +38,17 @@ public class StockCalculateServiceImpl implements StockCalculateService {
     private void init(){
         List<StockCalculatedRef> result = this.calculateDiff();
         log.info("can buy: {}", result);
+
+//        List<StockCalculatedRef> result = Lists.newArrayList();
+//        StockCalculatedRef ref = new StockCalculatedRef();
+//        ref.setCalculateStockXPriceRmb(123d);
+//        ref.setPriceNice(321d);
+//        ref.setPriceStockX(3213d);
+//        ref.setProfit(11d);
+//        ref.setProfitRate(11d);
+//        ref.setSizeEU("dsad");
+//        ref.setSizeUS("dsda");
+//        result.add(ref);
 
         saveToExcel(result);
     }
@@ -80,12 +89,12 @@ public class StockCalculateServiceImpl implements StockCalculateService {
             row.createCell(7).setCellValue(ref.getProfitRate());
         }
 
-        for(int i = 0; i < headers.size(); i++) {
-            sheet.autoSizeColumn(i);
-        }
+//        for(int i = 0; i < headers.size(); i++) {
+//            sheet.autoSizeColumn(i);
+//        }
 
         try {
-            FileOutputStream fileOut = new FileOutputStream("/Users/didi/bestbuy/bestbuy.xlsx");
+            FileOutputStream fileOut = new FileOutputStream("/Users/wbyin/bestbuy/bestbuy.xlsx");
             workbook.write(fileOut);
             fileOut.close();
         } catch (IOException e) {
