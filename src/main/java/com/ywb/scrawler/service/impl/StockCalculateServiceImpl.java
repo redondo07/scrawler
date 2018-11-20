@@ -39,23 +39,12 @@ public class StockCalculateServiceImpl implements StockCalculateService {
         List<StockCalculatedRef> result = this.calculateDiff();
         log.info("can buy: {}", result);
 
-//        List<StockCalculatedRef> result = Lists.newArrayList();
-//        StockCalculatedRef ref = new StockCalculatedRef();
-//        ref.setCalculateStockXPriceRmb(123d);
-//        ref.setPriceNice(321d);
-//        ref.setPriceStockX(3213d);
-//        ref.setProfit(11d);
-//        ref.setProfitRate(11d);
-//        ref.setSizeEU("dsad");
-//        ref.setSizeUS("dsda");
-//        result.add(ref);
-
         saveToExcel(result);
     }
 
     private void saveToExcel(List<StockCalculatedRef> refs) {
         Workbook workbook = new XSSFWorkbook();
-        CreationHelper createHelper = workbook.getCreationHelper();
+        // CreationHelper createHelper = workbook.getCreationHelper();
         Sheet sheet = workbook.createSheet("bestbuy");
 
         Font headerFont = workbook.createFont();
@@ -68,8 +57,8 @@ public class StockCalculateServiceImpl implements StockCalculateService {
 
         Row headerRow = sheet.createRow(0);
 
-        List<String> headers = Lists.newArrayList("sku", "sizeUS", "sizeEU", "priceNice",
-                "priceStockX", "calculateStockXPriceRmb", "profit", "profitRate");
+        List<String> headers = Lists.newArrayList("name", "cover", "sku", "sizeUS", "sizeEU", "priceNice",
+                "priceStockX", "calculatedNicePriceRmb", "calculateStockXPriceRmb", "profit", "profitRate");
         for(int i = 0; i < headers.size(); i++) {
             Cell cell = headerRow.createCell(i);
             cell.setCellValue(headers.get(i));
@@ -79,14 +68,17 @@ public class StockCalculateServiceImpl implements StockCalculateService {
         int rowNum = 1;
         for(StockCalculatedRef ref : refs){
             Row row = sheet.createRow(rowNum++);
-            row.createCell(0).setCellValue(ref.getSku());
-            row.createCell(1).setCellValue(ref.getSizeUS());
-            row.createCell(2).setCellValue(ref.getSizeEU());
-            row.createCell(3).setCellValue(ref.getPriceNice());
-            row.createCell(4).setCellValue(ref.getPriceStockX());
-            row.createCell(5).setCellValue(ref.getCalculateStockXPriceRmb());
-            row.createCell(6).setCellValue(ref.getProfit());
-            row.createCell(7).setCellValue(ref.getProfitRate());
+            row.createCell(0).setCellValue(ref.getName());
+            row.createCell(1).setCellValue(ref.getImgUrl());
+            row.createCell(2).setCellValue(ref.getSku());
+            row.createCell(3).setCellValue(ref.getSizeUS());
+            row.createCell(4).setCellValue(ref.getSizeEU());
+            row.createCell(5).setCellValue(ref.getPriceNice());
+            row.createCell(6).setCellValue(ref.getPriceStockX());
+            row.createCell(7).setCellValue(ref.getCalculatedNicePriceRmb());
+            row.createCell(8).setCellValue(ref.getCalculateStockXPriceRmb());
+            row.createCell(9).setCellValue(ref.getProfit());
+            row.createCell(10).setCellValue(ref.getProfitRate());
         }
 
 //        for(int i = 0; i < headers.size(); i++) {
@@ -94,7 +86,7 @@ public class StockCalculateServiceImpl implements StockCalculateService {
 //        }
 
         try {
-            FileOutputStream fileOut = new FileOutputStream("/Users/wbyin/bestbuy/bestbuy.xlsx");
+            FileOutputStream fileOut = new FileOutputStream("/Users/didi/bestbuy/bestbuy.xlsx");
             workbook.write(fileOut);
             fileOut.close();
         } catch (IOException e) {
@@ -106,8 +98,10 @@ public class StockCalculateServiceImpl implements StockCalculateService {
     public List<StockCalculatedRef> calculateDiff() {
         List<StockCalculatedRef> result = Lists.newArrayList();
 
-        List<NiceShoeListModel> top200Nice = niceApiService.getProductList();
-        for(NiceShoeListModel niceModel : top200Nice){
+        List<NiceShoeListModel> top100Nice = niceApiService.getProductList();
+        int count = 0;
+        System.out.println("topNice size: " + top100Nice.size());
+        for(NiceShoeListModel niceModel : top100Nice){
             System.out.println("Sleep " + niceModel.getSku());
             try {
                 Thread.sleep(3000);
@@ -133,10 +127,11 @@ public class StockCalculateServiceImpl implements StockCalculateService {
                 StockXStockInfo stockStockX = stockXModel.getStocks().get(sizeEnum);
 
                 if(null != stockStockX){
-                    Double calculatedStockXPrice = (stockStockX.getAmount() + calculateConstants.getTax()) * calculateConstants.getCurrency();
-                    if(stockNice.getPrice() > calculatedStockXPrice){
+                    Double calculatedStockXPrice = (stockStockX.getAmount() + calculateConstants.getShippingAndTaxUSD()) * calculateConstants.getCurrency();
+                    Double calculatedNicePrice = (stockNice.getPrice() - 10d) * 0.95d;
+                    if(calculatedNicePrice > calculatedStockXPrice){
                         BigDecimal profitRate = new BigDecimal(
-                                format.format((stockNice.getPrice() - calculatedStockXPrice) / calculatedStockXPrice))
+                                format.format((calculatedNicePrice - calculatedStockXPrice) / calculatedStockXPrice))
                                 .setScale(2);
 
                         if(profitRate.compareTo(BigDecimal.valueOf(calculateConstants.getProfitRate())) > 0){
@@ -144,30 +139,29 @@ public class StockCalculateServiceImpl implements StockCalculateService {
                             ref.setSku(niceModel.getSku());
                             ref.setCalculateStockXPriceRmb(calculatedStockXPrice);
                             ref.setPriceNice(stockNice.getPrice());
+                            ref.setCalculatedNicePriceRmb(calculatedNicePrice);
                             ref.setPriceStockX(stockStockX.getAmount());
                             ref.setProfit(stockNice.getPrice() - calculatedStockXPrice);
                             ref.setProfitRate(profitRate.doubleValue());
                             ref.setSizeEU(sizeEnum.getSizeEU());
                             ref.setSizeUS(sizeEnum.getSizeUS());
+                            ref.setDesc(stockNice.getDesc());
+                            ref.setImgUrl(niceModel.getCover());
+                            ref.setName(niceModel.getName());
 
                             System.out.println(ref);
+
                             result.add(ref);
                         }
                     }
                 }
             }
 
-            System.out.println("Wake up");
+            System.out.println("Wake up " + count++);
         }
+
+        log.info("[calculateDiff] result: {}", result);
         return result;
     }
 
-    public static void main(String[] args){
-        double a = 2d;
-        double b = 3d;
-        BigDecimal profitRate = new BigDecimal(
-                format.format(a / b))
-                .setScale(2);
-        System.out.println(profitRate);
-    }
 }

@@ -70,9 +70,15 @@ public class NiceApiServiceImpl implements NiceApiService {
                     continue;
                 }
                 if(null != stocks.get(sizeEnum)){
-                    log.info("duplicate key, stock: {}, stockInMap: {}", stockInfo, stocks.get(sizeEnum));
+                    if(stocks.get(sizeEnum).getPrice() > stockInfo.getPrice()){
+                        stocks.put(SizeChartEnum.getBySizeEU(stockInfo.getSize()), stockInfo);
+                        log.info("duplicate key and replace, stock: {}, stockInMap: {}", stockInfo, stocks.get(sizeEnum));
+                    } else{
+                        log.info("duplicate key, stock: {}, stockInMap: {}", stockInfo, stocks.get(sizeEnum));
+                    }
+                } else{
+                    stocks.put(SizeChartEnum.getBySizeEU(stockInfo.getSize()), stockInfo);
                 }
-                stocks.put(SizeChartEnum.getBySizeEU(stockInfo.getSize()), stockInfo);
             }
             model.setStocks(stocks);
 
@@ -190,9 +196,9 @@ public class NiceApiServiceImpl implements NiceApiService {
             ResponseEntity<String> resp = restTemplate.exchange("http://api.oneniceapp.com/product/listTab?abroad=no&appv=5.2.14.20&did=eeb4f168016f955f9ebe4365f4f63656&dn=Wenbiao%E7%9A%84%20iPhone&dt=iPhone10%2C3&geoacc=11&im=52DDFF9C-6CFE-4D53-AE78-56091BAD8269&la=cn&lm=weixin&lp=-1.000000&net=0-0-wifi&osn=iOS&osv=12.1&seid=f3d7675ce55ab0c8c1baeb1d49aec0d4&sh=812.000000&sw=375.000000&token=8dvGFRNl8izMftPmiwfbPpiCwigS2NLL&ts=1542535786813",
                     HttpMethod.POST, entity, String.class);
 
-            String result = resp.getBody();
+            JSONObject json = JSONObject.parseObject(resp.getBody());
+            log.info("[getDataByEncryptedUrl] key: {}, response: {}", entry.getKey(), json.toJSONString());
 
-            JSONObject json = JSONObject.parseObject(result);
             JSONArray list = json.getJSONObject("data").getJSONArray("list");
 
             for (int i = 0; i < list.size(); i++) {

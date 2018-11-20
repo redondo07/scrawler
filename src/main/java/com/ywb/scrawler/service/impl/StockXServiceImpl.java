@@ -78,10 +78,15 @@ public class StockXServiceImpl implements StockXService {
                     continue;
                 }
                 if(null != stocks.get(sizeEnum)){
-                    log.info("duplicate key, stock: {}, stockInMap: {}", stockInfo, stocks.get(sizeEnum));
+                    if(stocks.get(sizeEnum).getAmount() > stockInfo.getAmount()){
+                        log.info("duplicate key and replace, stock: {}, stockInMap: {}", stockInfo, stocks.get(sizeEnum));
+                        stocks.put(sizeEnum, stockInfo);
+                    } else {
+                        log.info("duplicate key, stock: {}, stockInMap: {}", stockInfo, stocks.get(sizeEnum));
+                    }
+                } else{
+                    stocks.put(sizeEnum, stockInfo);
                 }
-
-                stocks.put(sizeEnum, stockInfo);
             }
             model.setStocks(stocks);
             return model;
