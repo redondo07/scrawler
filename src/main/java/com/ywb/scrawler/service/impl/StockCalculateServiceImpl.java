@@ -129,12 +129,14 @@ public class StockCalculateServiceImpl implements StockCalculateService {
                 if(null != stockStockX){
                     Double calculatedStockXPrice = (stockStockX.getAmount() + calculateConstants.getShippingAndTaxUSD()) * calculateConstants.getCurrency();
                     Double calculatedNicePrice = (stockNice.getPrice() - 10d) * 0.95d;
+
                     if(calculatedNicePrice > calculatedStockXPrice){
                         BigDecimal profitRate = new BigDecimal(
                                 format.format((calculatedNicePrice - calculatedStockXPrice) / calculatedStockXPrice))
                                 .setScale(2);
 
-                        if(profitRate.compareTo(BigDecimal.valueOf(calculateConstants.getProfitRate())) > 0){
+                        if(profitRate.compareTo(BigDecimal.valueOf(calculateConstants.getProfitRate())) > 0 &&
+                                profitRate.compareTo(BigDecimal.ONE) < 0){
                             StockCalculatedRef ref = new StockCalculatedRef();
                             ref.setSku(niceModel.getSku());
                             ref.setCalculateStockXPriceRmb(calculatedStockXPrice);
