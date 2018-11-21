@@ -11,6 +11,7 @@ import java.util.Map;
 @Setter
 @ToString
 public class StockXShoeListModel {
+    private String sku;
     private String name;
     private String release_date;
     private String colorway;

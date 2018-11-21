@@ -209,7 +209,7 @@ public class StockCalculateServiceImpl implements StockCalculateService {
             }
         }
         log.info("[calculateDiff] result: {}", result);
-        saveToExcel(result);
+        //saveToExcel(result);
 
         return result;
     }
@@ -261,7 +261,7 @@ public class StockCalculateServiceImpl implements StockCalculateService {
 //        }
 
         try {
-            String name = "./bestbuy/bestbuy_" + System.currentTimeMillis() + ".xlsx";
+            String name = "/Users/wbyin/bestbuy/bestbuy_" + System.currentTimeMillis() + ".xlsx";
             FileOutputStream fileOut = new FileOutputStream(name);
             workbook.write(fileOut);
             fileOut.close();

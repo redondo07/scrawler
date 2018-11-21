@@ -31,14 +31,14 @@ public class StockXServiceImpl implements StockXService {
     @Autowired
     private RestTemplate restTemplate;
 
-    //@PostConstruct
-//    private void init(){
-//        this.searchItem("555088 700");
-////        StockXShoeListModel model = new StockXShoeListModel();
-////        model.setObjectID("65ed1433-cc81-4bc6-a6eb-576ebb3ccc42");
-////        this.getProductDetail(model);
-//
-//    }
+    // @PostConstruct
+    private void init(){
+        // this.searchItem("555088 700");
+        StockXShoeListModel model = new StockXShoeListModel();
+        model.setObjectID("5c5d3150-983f-454f-aa43-03d59d2edc7c");
+        this.getProductDetail(model);
+
+    }
 
     @Override
     public List<StockXShoeListModel> getProductList() {
@@ -47,12 +47,13 @@ public class StockXServiceImpl implements StockXService {
 
     @Override
     public StockXShoeListModel getProductDetail(StockXShoeListModel model) {
+        int count = 0;
         try{
             if(null == model || Strings.isNullOrEmpty(model.getObjectID())){
                 return null;
             }
             MultiValueMap<String, String> headers = new LinkedMultiValueMap();
-            headers.add("jwt-authorization", "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJzdG9ja3guY29tIiwic3ViIjoic3RvY2t4LmNvbSIsImF1ZCI6IndlYiIsImFwcF9uYW1lIjoiaW9zIiwiYXBwX3ZlcnNpb24iOiIzLjguNC4xNDcwNyIsImlzc3VlZF9hdCI6IjIwMTgtMTEtMTkgMDc6Mzg6MDgiLCJjdXN0b21lcl9pZCI6bnVsbCwiZW1haWwiOm51bGwsImN1c3RvbWVyX3V1aWQiOm51bGwsImZpcnN0TmFtZSI6bnVsbCwibGFzdE5hbWUiOm51bGwsImdkcHJfc3RhdHVzIjpudWxsLCJkZWZhdWx0X2N1cnJlbmN5IjoiVVNEIiwic2hpcF9ieV9kYXRlIjpudWxsLCJ2YWNhdGlvbl9kYXRlIjpudWxsLCJwcm9kdWN0X2NhdGVnb3J5Ijoic25lYWtlcnMiLCJpc19hZG1pbiI6bnVsbCwic2Vzc2lvbl9pZCI6IjEyOTM5Njk2ODE0ODU1OTI5NTcxIiwiZXhwIjoxNTQzMjE3ODg4LCJhcGlfa2V5cyI6bnVsbH0.Xh3JtTENx0llMUhKiB7A1zMxTJXqrdpF2S6NxVjHBR4");
+            headers.add("jwt-authorization", "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJzdG9ja3guY29tIiwic3ViIjoic3RvY2t4LmNvbSIsImF1ZCI6IndlYiIsImFwcF9uYW1lIjoiaW9zIiwiYXBwX3ZlcnNpb24iOiIzLjguNC4xNDcwNyIsImlzc3VlZF9hdCI6IjIwMTgtMTEtMjEgMTU6NTg6NTgiLCJjdXN0b21lcl9pZCI6IjQwOTU3MjMiLCJlbWFpbCI6InJlZG9uZG8uMTk4Njc5QGhvdG1haWwuY29tIiwiY3VzdG9tZXJfdXVpZCI6ImFiYTg3Yzg3LWVjN2YtMTFlOC04YWQzLTBhOTM4YjE4OTNhZSIsImZpcnN0TmFtZSI6IndlbmJpYW8iLCJsYXN0TmFtZSI6InlpbiIsImdkcHJfc3RhdHVzIjoiQUNDRVBURUQiLCJkZWZhdWx0X2N1cnJlbmN5IjoiVVNEIiwic2hpcF9ieV9kYXRlIjpudWxsLCJ2YWNhdGlvbl9kYXRlIjpudWxsLCJwcm9kdWN0X2NhdGVnb3J5Ijoic25lYWtlcnMiLCJpc19hZG1pbiI6IjAiLCJzZXNzaW9uX2lkIjoiMTI5Mzk2OTY4MTQ4NTU5Mjk1NzEiLCJleHAiOjE1NDM0MjA3MzgsImFwaV9rZXlzIjpbXX0.At1EoUAgQwnfls8URtfFLLjCMdQ4odReCkkF3-tStfk");
             headers.add("x-api-key", "99WtRZK6pS1Fqt8hXBfWq8BYQjErmwipa3a0hYxX");
 
             HttpEntity<String> entity = new HttpEntity<>("", headers);
@@ -63,6 +64,7 @@ public class StockXServiceImpl implements StockXService {
             URI uri = URI.create(paramsUrl.toString());
             ResponseEntity<String> resp = restTemplate.exchange(uri, HttpMethod.GET, entity, String.class);
             JSONObject json = JSONObject.parseObject(resp.getBody());
+            log.info("[getProductDetail] sku: {}, objectId: {}, result: {}", model.getSku(), model.getObjectID(), resp.getBody());
             JSONArray stocksJson = json.getJSONArray("ProductActivity");
 
             Map<SizeChartEnum, StockXStockInfo> stocks = Maps.newHashMap();
@@ -89,9 +91,15 @@ public class StockXServiceImpl implements StockXService {
                 }
             }
             model.setStocks(stocks);
+
+            log.info("searched objectId: {}, sku: {}, model: {}", model.getObjectID(), model.getSku(), model);
             return model;
         } catch (Exception e){
             log.error("[getProductDetail] e: ", e);
+            count++;
+            if(count < 3){
+                getProductDetail(model);
+            }
         }
 
         return null;
@@ -99,6 +107,7 @@ public class StockXServiceImpl implements StockXService {
 
     @Override
     public StockXShoeListModel searchItem(String sku) {
+        int count = 0;
         try{
             MultiValueMap<String, String> headers = new LinkedMultiValueMap();
             headers.add("jwt-authorization", "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJzdG9ja3guY29tIiwic3ViIjoic3RvY2t4LmNvbSIsImF1ZCI6IndlYiIsImFwcF9uYW1lIjoiaW9zIiwiYXBwX3ZlcnNpb24iOiIzLjguNC4xNDcwNyIsImlzc3VlZF9hdCI6IjIwMTgtMTEtMTkgMDc6Mzg6MDgiLCJjdXN0b21lcl9pZCI6bnVsbCwiZW1haWwiOm51bGwsImN1c3RvbWVyX3V1aWQiOm51bGwsImZpcnN0TmFtZSI6bnVsbCwibGFzdE5hbWUiOm51bGwsImdkcHJfc3RhdHVzIjpudWxsLCJkZWZhdWx0X2N1cnJlbmN5IjoiVVNEIiwic2hpcF9ieV9kYXRlIjpudWxsLCJ2YWNhdGlvbl9kYXRlIjpudWxsLCJwcm9kdWN0X2NhdGVnb3J5Ijoic25lYWtlcnMiLCJpc19hZG1pbiI6bnVsbCwic2Vzc2lvbl9pZCI6IjEyOTM5Njk2ODE0ODU1OTI5NTcxIiwiZXhwIjoxNTQzMjE3ODg4LCJhcGlfa2V5cyI6bnVsbH0.Xh3JtTENx0llMUhKiB7A1zMxTJXqrdpF2S6NxVjHBR4");
@@ -118,6 +127,7 @@ public class StockXServiceImpl implements StockXService {
             if(null != hits && hits.size() >= 1){
                 JSONObject hit = hits.getJSONObject(0);
                 StockXShoeListModel model = new StockXShoeListModel();
+                model.setSku(sku);
                 model.setName(hit.getString("name"));
                 model.setColorway(hit.getString("colorway"));
                 model.setRelease_date(hit.getString("release_date"));
@@ -131,6 +141,10 @@ public class StockXServiceImpl implements StockXService {
             }
         } catch (Exception e){
             log.error("[searchItem] e: ", e);
+            count++;
+            if(count < 3){
+                searchItem(sku);
+            }
         }
         return null;
     }
