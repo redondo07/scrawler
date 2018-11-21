@@ -2,12 +2,15 @@ package com.ywb.scrawler.service.impl;
 
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
+import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.ywb.scrawler.enums.SizeChartEnum;
+import com.ywb.scrawler.model.NiceSaleListModel;
 import com.ywb.scrawler.model.NiceShoeListModel;
 import com.ywb.scrawler.model.NiceStockInfo;
+import com.ywb.scrawler.model.StockXStockInfo;
 import com.ywb.scrawler.service.NiceApiService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,6 +24,7 @@ import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
 
 import javax.annotation.PostConstruct;
+import java.net.URI;
 import java.util.List;
 import java.util.Map;
 
@@ -37,15 +41,11 @@ public class NiceApiServiceImpl implements NiceApiService {
             "40", "nice-sign-v1://6dea0c519cff8a45514521080184cded:4b0ce81b81cc40cf/{\"token\":\"8dvGFRNl8izMftPmiwfbPpiCwigS2NLL\",\"tab\":\"hot\",\"type\":\"Shoes\",\"categoryIds\":\"5\",\"nextkey\":\"40\"}");
             // "60", "nice-sign-v1://dce31197157e81f3cbb8edc59785c9eb:4e1ba37e7609ce1b/{\"token\":\"8dvGFRNl8izMftPmiwfbPpiCwigS2NLL\",\"tab\":\"hot\",\"type\":\"Shoes\",\"categoryIds\":\"5\",\"nextkey\":\"60\"}");
 
-//    @PostConstruct
-//    private void init() {
-//        // get all products
-////        List<NiceShoeListModel> result = Lists.newArrayList();
-//        List<NiceShoeListModel> models = this.getProductList();
-////        for(NiceShoeListModel model : models){
-////            result.add(this.getProductDetail(model));
-////        }
-//    }
+    @PostConstruct
+    private void init() {
+        // get all products
+        List<NiceSaleListModel> models = this.getSaleList();
+    }
 
     @Override
     public NiceShoeListModel getProductDetail(NiceShoeListModel model) {
@@ -88,6 +88,56 @@ public class NiceApiServiceImpl implements NiceApiService {
         }
         return null;
 
+    }
+
+    @Override
+    public List<NiceSaleListModel> getSaleList() {
+        List<NiceSaleListModel> result = Lists.newArrayList();
+
+        try{
+            HttpEntity<String> entity = new HttpEntity<>(
+                    "nice-sign-v1://e57f2dc866c9381102d2d0c943e83ca5:9f76a740a0027d2f/{\"nextkey\":\"\",\"status\":\"pass\",\"token\":\"arQAiGVk839UoBT-CBeAPItmt-wneZEF\"}", new LinkedMultiValueMap());
+            ResponseEntity<String> resp = restTemplate.exchange(
+                    "http://115.182.19.34/Sneakersale/getsaleList?abroad=no&appv=5.2.14.20&ch=AppStore_5.2.14.20&did=eeb4f168016f955f9ebe4365f4f63656&dn=Wenbiao%E7%9A%84%20iPhone&dt=iPhone10%2C3&geoacc=10&im=52DDFF9C-6CFE-4D53-AE78-56091BAD8269&la=cn&lm=mobile&lp=-1.000000&net=0-0-wifi&osn=iOS&osv=12.1&seid=f8e475ab8669d6321430fb1cd4abe5f9&sh=812.000000&src=user_live&sw=375.000000&token=arQAiGVk839UoBT-CBeAPItmt-wneZEF&ts=1542795738869",
+                    HttpMethod.POST, entity, String.class);
+            String body = resp.getBody();
+            JSONArray json = JSONObject.parseObject(body).getJSONObject("data").getJSONArray("list");
+
+            for(int i = 0; i < json.size(); i++){
+                try{
+                    JSONObject item = json.getJSONObject(i);
+
+                    // TODO 判断下架产品
+                    boolean isOnSale = true;
+                    if(!isOnSale){
+                        continue;
+                    }
+
+                    // text不为空，表示有多个产品
+                    if(!Strings.isNullOrEmpty(item.getString("text"))) {
+                        // TODO 爬取html获取多个尺码商品价格
+
+                    } else {
+                        NiceSaleListModel model = new NiceSaleListModel();
+                        JSONObject goodInfo = item.getJSONObject("goods_info");
+                        model.setCover(goodInfo.getString("cover"));
+                        model.setName(goodInfo.getString("name"));
+                        model.setSize(goodInfo.getString("size"));
+                        model.setSku(goodInfo.getString("sku"));
+                        model.setSalePrice(item.getDouble("price"));
+
+                        result.add(model);
+                    }
+                } catch(Exception e){
+                    log.error("[getSaleList] e: ", e);
+                }
+            }
+        } catch (Exception e){
+            log.error("[getSaleList] e: ", e);
+        }
+        System.out.println(result);
+
+        return result;
     }
 
     @Override

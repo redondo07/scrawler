@@ -38,7 +38,7 @@ public class StockCalculateServiceImpl implements StockCalculateService {
 
     private static DecimalFormat format = new DecimalFormat("0.00");
 
-    @PostConstruct
+   //  @PostConstruct
     private void init(){
         List<StockCalculatedRef> result = this.calculateDiff();
         log.info("can buy: {}", result);
