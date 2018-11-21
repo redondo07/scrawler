@@ -32,7 +32,7 @@ public class StockCalculateServiceImpl implements StockCalculateService {
 
     @Autowired
     private CalculateConstants calculateConstants;
-    private static DecimalFormat format = new DecimalFormat("0.00");;
+    private static DecimalFormat format = new DecimalFormat("0.00");
 
     @PostConstruct
     private void init(){
@@ -42,57 +42,7 @@ public class StockCalculateServiceImpl implements StockCalculateService {
         saveToExcel(result);
     }
 
-    private void saveToExcel(List<StockCalculatedRef> refs) {
-        Workbook workbook = new XSSFWorkbook();
-        // CreationHelper createHelper = workbook.getCreationHelper();
-        Sheet sheet = workbook.createSheet("bestbuy");
 
-        Font headerFont = workbook.createFont();
-        headerFont.setBold(true);
-        headerFont.setFontHeightInPoints((short) 14);
-        headerFont.setColor(IndexedColors.RED.getIndex());
-
-        CellStyle headerCellStyle = workbook.createCellStyle();
-        headerCellStyle.setFont(headerFont);
-
-        Row headerRow = sheet.createRow(0);
-
-        List<String> headers = Lists.newArrayList("name", "cover", "sku", "sizeUS", "sizeEU", "priceNice",
-                "priceStockX", "calculatedNicePriceRmb", "calculateStockXPriceRmb", "profit", "profitRate");
-        for(int i = 0; i < headers.size(); i++) {
-            Cell cell = headerRow.createCell(i);
-            cell.setCellValue(headers.get(i));
-            cell.setCellStyle(headerCellStyle);
-        }
-
-        int rowNum = 1;
-        for(StockCalculatedRef ref : refs){
-            Row row = sheet.createRow(rowNum++);
-            row.createCell(0).setCellValue(ref.getName());
-            row.createCell(1).setCellValue(ref.getImgUrl());
-            row.createCell(2).setCellValue(ref.getSku());
-            row.createCell(3).setCellValue(ref.getSizeUS());
-            row.createCell(4).setCellValue(ref.getSizeEU());
-            row.createCell(5).setCellValue(ref.getPriceNice());
-            row.createCell(6).setCellValue(ref.getPriceStockX());
-            row.createCell(7).setCellValue(ref.getCalculatedNicePriceRmb());
-            row.createCell(8).setCellValue(ref.getCalculateStockXPriceRmb());
-            row.createCell(9).setCellValue(ref.getProfit());
-            row.createCell(10).setCellValue(ref.getProfitRate());
-        }
-
-//        for(int i = 0; i < headers.size(); i++) {
-//            sheet.autoSizeColumn(i);
-//        }
-
-        try {
-            FileOutputStream fileOut = new FileOutputStream("/Users/didi/bestbuy/bestbuy.xlsx");
-            workbook.write(fileOut);
-            fileOut.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
 
     @Override
     public List<StockCalculatedRef> calculateDiff() {
@@ -166,4 +116,77 @@ public class StockCalculateServiceImpl implements StockCalculateService {
         return result;
     }
 
+    private void saveToExcel(List<StockCalculatedRef> refs) {
+        Workbook workbook = new XSSFWorkbook();
+        // CreationHelper createHelper = workbook.getCreationHelper();
+        Sheet sheet = workbook.createSheet("bestbuy");
+
+        Font headerFont = workbook.createFont();
+        headerFont.setBold(true);
+        headerFont.setFontHeightInPoints((short) 14);
+        headerFont.setColor(IndexedColors.RED.getIndex());
+
+        CellStyle headerCellStyle = workbook.createCellStyle();
+        headerCellStyle.setFont(headerFont);
+
+        Row headerRow = sheet.createRow(0);
+
+        List<String> headers = Lists.newArrayList("name", "sku", "sizeUS", "sizeEU", "priceNice",
+                "priceStockX", "calculatedNicePriceRmb", "calculateStockXPriceRmb", "profit", "profitRate", "cover");
+        for(int i = 0; i < headers.size(); i++) {
+            Cell cell = headerRow.createCell(i);
+            cell.setCellValue(headers.get(i));
+            cell.setCellStyle(headerCellStyle);
+        }
+
+        int rowNum = 1;
+        for(StockCalculatedRef ref : refs){
+            Row row = sheet.createRow(rowNum++);
+            int cellNum = 0;
+            row.createCell(cellNum++).setCellValue(ref.getName());
+            row.createCell(cellNum++).setCellValue(ref.getSku());
+            row.createCell(cellNum++).setCellValue(ref.getSizeUS());
+            row.createCell(cellNum++).setCellValue(ref.getSizeEU());
+            row.createCell(cellNum++).setCellValue(ref.getPriceNice());
+            row.createCell(cellNum++).setCellValue(ref.getPriceStockX());
+            row.createCell(cellNum++).setCellValue(ref.getCalculatedNicePriceRmb());
+            row.createCell(cellNum++).setCellValue(ref.getCalculateStockXPriceRmb());
+            row.createCell(cellNum++).setCellValue(ref.getProfit());
+            row.createCell(cellNum++).setCellValue(ref.getProfitRate());
+            row.createCell(cellNum++).setCellValue(ref.getImgUrl());
+
+        }
+
+//        for(int i = 0; i < headers.size(); i++) {
+//            sheet.autoSizeColumn(i);
+//        }
+
+        try {
+            FileOutputStream fileOut = new FileOutputStream("/Users/didi/bestbuy/bestbuy.xlsx");
+            workbook.write(fileOut);
+            fileOut.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    // TODO
+    private List<StockCalculatedRef> loadFromExcel(String path) {
+        return null;
+    }
+
+    private List<StockCalculatedRef> findOutOfStockItems(List<StockCalculatedRef> itemsPosted, List<StockCalculatedRef> newItems) {
+
+        return null;
+    }
+
+    private List<StockCalculatedRef> findNewItems(List<StockCalculatedRef> itemsPosted, List<StockCalculatedRef> newItems) {
+
+        return null;
+    }
+
+    private List<StockCalculatedRef> findExistingItems(List<StockCalculatedRef> itemsPosted, List<StockCalculatedRef> newItems) {
+
+        return null;
+    }
 }
