@@ -16,6 +16,8 @@ public class StockCalculateServiceTest {
 
     @Resource
     private StockCalculateService stockCalculateService;
+    @Resource
+    private NiceStockInfoPageService niceStockInfoPageService;
 
     @Test
     public void calculateDiffTest() {
@@ -24,7 +26,12 @@ public class StockCalculateServiceTest {
 
         System.out.println(result.size());
         System.out.println("[calculateDiffTest] calculate cost " + (System.currentTimeMillis() - start) + " ms.");
+    }
 
+    @Test
+    public void getStockInfoByGoodsIdTest() {
+        String goodsId = "87342";
+        niceStockInfoPageService.getStockInfoByGoodsId(goodsId);
     }
 
 }
