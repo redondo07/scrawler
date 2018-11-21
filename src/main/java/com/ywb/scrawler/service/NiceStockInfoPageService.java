@@ -29,7 +29,15 @@ public class NiceStockInfoPageService {
                 model.setUnit(spans.select("span.sizeItemPrice").get(0).childNode(0).toString());
                 model.setPrice(Double.valueOf(spans.select("span.sizeItemPrice").get(0).childNode(1).toString()));
                 model.setDesc(spans.select("span.sizeItemBtn").get(0).childNode(0).toString());
-                model.setStock(Integer.valueOf(spans.select("span.sizeItemNum").get(0).childNode(0).toString()));
+
+                Integer stock = 0;
+                try {
+                    stock =  Integer.valueOf(spans.select("span.sizeItemNum").get(0).childNode(0).toString());
+                } catch (NumberFormatException e1) {
+                    System.out.println("库存不为数字。。");
+                    stock = 0;
+                }
+                model.setStock(stock);
                 stocks.add(model);
             }
 
@@ -52,8 +60,5 @@ public class NiceStockInfoPageService {
         conn.timeout(15 * 1000);
         conn.ignoreContentType(true);
         return conn;
-
     }
-
-
 }

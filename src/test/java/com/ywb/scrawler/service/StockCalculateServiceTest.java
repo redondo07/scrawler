@@ -1,6 +1,7 @@
 package com.ywb.scrawler.service;
 
 
+import com.ywb.scrawler.model.NiceStockInfo;
 import com.ywb.scrawler.model.StockCalculatedRef;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -31,7 +32,8 @@ public class StockCalculateServiceTest {
     @Test
     public void getStockInfoByGoodsIdTest() {
         String goodsId = "87342";
-        niceStockInfoPageService.getStockInfoByGoodsId(goodsId);
+        List<NiceStockInfo> stockInfos = niceStockInfoPageService.getStockInfoByGoodsId(goodsId);
+        System.out.println(stockInfos.size());
     }
 
 }
