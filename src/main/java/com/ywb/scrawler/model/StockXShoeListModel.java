@@ -1,11 +1,10 @@
 package com.ywb.scrawler.model;
 
-import com.ywb.scrawler.SizeChartEnum;
+import com.ywb.scrawler.enums.SizeChartEnum;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 
-import java.util.List;
 import java.util.Map;
 
 @Getter

@@ -1,4 +1,4 @@
-package com.ywb.scrawler;
+package com.ywb.scrawler.enums;
 
 public enum SizeChartEnum {
 

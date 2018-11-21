@@ -11,7 +11,6 @@ import org.springframework.stereotype.Component;
 @Setter
 public class CalculateConstants {
     private Double currency;
-    private Double shippingFee;
-    private Double tax = 7d;
-    private Double profitRate = 0.1;
+    private Double shippingAndTaxUSD;
+    private Double profitRate;
 }

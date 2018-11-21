@@ -2,9 +2,10 @@ package com.ywb.scrawler.service.impl;
 
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import com.ywb.scrawler.SizeChartEnum;
+import com.ywb.scrawler.enums.SizeChartEnum;
 import com.ywb.scrawler.model.NiceShoeListModel;
 import com.ywb.scrawler.model.NiceStockInfo;
 import com.ywb.scrawler.service.NiceApiService;
@@ -30,15 +31,21 @@ public class NiceApiServiceImpl implements NiceApiService {
     @Autowired
     private RestTemplate restTemplate;
 
-    @PostConstruct
-    private void init() {
-        // get all products
-//        List<NiceShoeListModel> result = Lists.newArrayList();
+    private final Map<String, String> mapNextKeyToData = ImmutableMap.of(
+            "", "nice-sign-v1://c2a5fa96ae698a7007852148fad93532:9f96a260b56c26a3/{\"token\":\"8dvGFRNl8izMftPmiwfbPpiCwigS2NLL\",\"tab\":\"hot\",\"type\":\"Shoes\",\"categoryIds\":\"5\",\"nextkey\":\"\"}",
+            "20", "nice-sign-v1://9246f5ad2ed625e4e32d6908406af6dd:f1d1bf4cfca5a1c2/{\"token\":\"8dvGFRNl8izMftPmiwfbPpiCwigS2NLL\",\"tab\":\"hot\",\"type\":\"Shoes\",\"categoryIds\":\"5\",\"nextkey\":\"20\"}",
+            "40", "nice-sign-v1://6dea0c519cff8a45514521080184cded:4b0ce81b81cc40cf/{\"token\":\"8dvGFRNl8izMftPmiwfbPpiCwigS2NLL\",\"tab\":\"hot\",\"type\":\"Shoes\",\"categoryIds\":\"5\",\"nextkey\":\"40\"}");
+            // "60", "nice-sign-v1://dce31197157e81f3cbb8edc59785c9eb:4e1ba37e7609ce1b/{\"token\":\"8dvGFRNl8izMftPmiwfbPpiCwigS2NLL\",\"tab\":\"hot\",\"type\":\"Shoes\",\"categoryIds\":\"5\",\"nextkey\":\"60\"}");
+
+//    @PostConstruct
+//    private void init() {
+//        // get all products
+////        List<NiceShoeListModel> result = Lists.newArrayList();
 //        List<NiceShoeListModel> models = this.getProductList();
-//        for(NiceShoeListModel model : models){
-//            result.add(this.getProductDetail(model));
-//        }
-    }
+////        for(NiceShoeListModel model : models){
+////            result.add(this.getProductDetail(model));
+////        }
+//    }
 
     @Override
     public NiceShoeListModel getProductDetail(NiceShoeListModel model) {
@@ -63,15 +70,21 @@ public class NiceApiServiceImpl implements NiceApiService {
                     continue;
                 }
                 if(null != stocks.get(sizeEnum)){
-                    log.info("duplicate key, stock: {}, stockInMap: {}", stockInfo, stocks.get(sizeEnum));
+                    if(stocks.get(sizeEnum).getPrice() > stockInfo.getPrice()){
+                        stocks.put(SizeChartEnum.getBySizeEU(stockInfo.getSize()), stockInfo);
+                        log.info("duplicate key and replace, stock: {}, stockInMap: {}", stockInfo, stocks.get(sizeEnum));
+                    } else{
+                        log.info("duplicate key, stock: {}, stockInMap: {}", stockInfo, stocks.get(sizeEnum));
+                    }
+                } else{
+                    stocks.put(SizeChartEnum.getBySizeEU(stockInfo.getSize()), stockInfo);
                 }
-                stocks.put(SizeChartEnum.getBySizeEU(stockInfo.getSize()), stockInfo);
             }
             model.setStocks(stocks);
 
             return model;
         } catch (Exception e){
-            log.error("[getProductDetail]", e);
+            log.error("[getProductDetail] e: ", e);
         }
         return null;
 
@@ -79,43 +92,45 @@ public class NiceApiServiceImpl implements NiceApiService {
 
     @Override
     public List<NiceShoeListModel> getProductList() {
+        return this.getDataByEncryptedUrl();
+
         // first screen
-        List<NiceShoeListModel> items = Lists.newArrayList();
-        Map<String, NiceShoeListModel> map = Maps.newHashMap();
-
-        for(NiceShoeListModel model : this.loadFirstScreen()){
-            if(null == map.get(model.getSku())){
-                map.put(model.getSku(), model);
-            }
-        }
-
-        // load more
-        int nextKey = 10;
-        for(int i = 0; i < 10; i++){
-            for(NiceShoeListModel model : this.loadMore(nextKey)){
-                if(null == map.get(model.getSku())){
-                    map.put(model.getSku(), model);
-                }
-            }
-            nextKey += 10;
-            try {
-                Thread.sleep(2000);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-        }
-
-        for(Map.Entry<String, NiceShoeListModel> entry : map.entrySet()){
-            items.add(entry.getValue());
-        }
-
-        System.out.println(items.size());
-
-        for(NiceShoeListModel model : items){
-            System.out.println(model.getSku());
-        }
-
-        return items;
+//        List<NiceShoeListModel> items = Lists.newArrayList();
+//        Map<String, NiceShoeListModel> map = Maps.newHashMap();
+//
+//        for(NiceShoeListModel model : this.loadFirstScreen()){
+//            if(null == map.get(model.getSku())){
+//                map.put(model.getSku(), model);
+//            }
+//        }
+//
+//        // load more
+//        int nextKey = 10;
+//        for(int i = 0; i < 10; i++){
+//            for(NiceShoeListModel model : this.loadMore(nextKey)){
+//                if(null == map.get(model.getSku())){
+//                    map.put(model.getSku(), model);
+//                }
+//            }
+//            nextKey += 10;
+//            try {
+//                Thread.sleep(2000);
+//            } catch (InterruptedException e) {
+//                e.printStackTrace();
+//            }
+//        }
+//
+//        for(Map.Entry<String, NiceShoeListModel> entry : map.entrySet()){
+//            items.add(entry.getValue());
+//        }
+//
+//        System.out.println(items.size());
+//
+//        for(NiceShoeListModel model : items){
+//            System.out.println(model.getSku());
+//        }
+//
+//        return items;
     }
 
     private List<NiceShoeListModel> loadFirstScreen(){
@@ -148,11 +163,6 @@ public class NiceApiServiceImpl implements NiceApiService {
 
 
         List<NiceShoeListModel> resultList = this.buildProducts(list);
-//        System.out.println("categories=%5B5%5D&sub_type=hot&nextkey=" + nextKey);
-//
-//        for(NiceShoeListModel model : resultList){
-//            System.out.println(model.getSku());
-//        }
         return resultList;
     }
 
@@ -175,33 +185,39 @@ public class NiceApiServiceImpl implements NiceApiService {
         return items;
     }
 
-    @Deprecated
     private List<NiceShoeListModel> getDataByEncryptedUrl(){
         MultiValueMap<String, String> headers = new LinkedMultiValueMap();
         headers.add("Content-Type", "application/json");
 
-        HttpEntity<String> entity = new HttpEntity<>("nice-sign-v1://c6d3ce5697413129b9488fc537bd6297:73d6739ddd9cb07c/{\"token\":\"8dvGFRNl8izMftPmiwfbPpiCwigS2NLL\",\"tab\":\"hot\",\"type\":\"All\",\"categoryIds\":\"\",\"nextkey\":\"\"}", headers);
-        ResponseEntity<String> resp = restTemplate.exchange("http://api.oneniceapp.com/product/listTab?abroad=no&appv=5.2.14.20&did=eeb4f168016f955f9ebe4365f4f63656&dn=Wenbiao%E7%9A%84%20iPhone&dt=iPhone10%2C3&geoacc=11&im=52DDFF9C-6CFE-4D53-AE78-56091BAD8269&la=cn&lm=weixin&lp=-1.000000&net=0-0-wifi&osn=iOS&osv=12.1&seid=f3d7675ce55ab0c8c1baeb1d49aec0d4&sh=812.000000&sw=375.000000&token=8dvGFRNl8izMftPmiwfbPpiCwigS2NLL&ts=1542535786813",
-                HttpMethod.POST, entity, String.class);
-        String result = resp.getBody();
-
-        JSONObject json = JSONObject.parseObject(result);
-        JSONArray list = json.getJSONObject("data").getJSONArray("list");
-
         List<NiceShoeListModel> items = Lists.newArrayList();
-        for (int i = 0; i < list.size(); i++) {
-            JSONObject item = list.getJSONObject(i);
-            NiceShoeListModel model = new NiceShoeListModel();
-            model.setId(item.getString("id"));
-            model.setName(item.getString("name"));
-            model.setCover(item.getString("cover"));
-            model.setRelease_time(item.getString("release_time"));
-            model.setSku(item.getString("sku"));
-            model.setDeal_num(item.getString("deal_num"));
 
-            items.add(model);
+        for(Map.Entry<String, String> entry : mapNextKeyToData.entrySet()){
+            HttpEntity<String> entity = new HttpEntity<>(entry.getValue(), headers);
+            ResponseEntity<String> resp = restTemplate.exchange("http://api.oneniceapp.com/product/listTab?abroad=no&appv=5.2.14.20&did=eeb4f168016f955f9ebe4365f4f63656&dn=Wenbiao%E7%9A%84%20iPhone&dt=iPhone10%2C3&geoacc=11&im=52DDFF9C-6CFE-4D53-AE78-56091BAD8269&la=cn&lm=weixin&lp=-1.000000&net=0-0-wifi&osn=iOS&osv=12.1&seid=f3d7675ce55ab0c8c1baeb1d49aec0d4&sh=812.000000&sw=375.000000&token=8dvGFRNl8izMftPmiwfbPpiCwigS2NLL&ts=1542535786813",
+                    HttpMethod.POST, entity, String.class);
+
+            JSONObject json = JSONObject.parseObject(resp.getBody());
+            log.info("[getDataByEncryptedUrl] key: {}, response: {}", entry.getKey(), json.toJSONString());
+
+            JSONArray list = json.getJSONObject("data").getJSONArray("list");
+
+            for (int i = 0; i < list.size(); i++) {
+                JSONObject item = list.getJSONObject(i);
+                NiceShoeListModel model = new NiceShoeListModel();
+                model.setId(item.getString("id"));
+                model.setName(item.getString("name"));
+                model.setCover(item.getString("cover"));
+                model.setRelease_time(item.getString("release_time"));
+                model.setSku(item.getString("sku"));
+                model.setDeal_num(item.getString("deal_num"));
+
+                items.add(model);
+            }
         }
 
+        for(NiceShoeListModel item : items){
+            System.out.println(item.getSku());
+        }
         return items;
     }
 

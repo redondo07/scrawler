@@ -13,8 +13,12 @@ public class StockCalculatedRef {
     private String sizeEU;
     private Double priceNice;
     private Double priceStockX;
+    private Double calculatedNicePriceRmb;
     private Double calculateStockXPriceRmb;
     private Double profit;
     private Double profitRate;
+    private String name;
+    private String imgUrl;
+    private String desc;
 
 }
