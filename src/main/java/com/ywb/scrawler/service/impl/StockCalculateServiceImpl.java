@@ -1,6 +1,7 @@
 package com.ywb.scrawler.service.impl;
 
 import com.google.common.collect.Lists;
+import com.ywb.scrawler.dao.StockDao;
 import com.ywb.scrawler.enums.SizeChartEnum;
 import com.ywb.scrawler.constants.CalculateConstants;
 import com.ywb.scrawler.model.*;
@@ -14,6 +15,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
+import javax.annotation.Resource;
+import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.math.BigDecimal;
@@ -24,14 +27,15 @@ import java.util.Map;
 @Component
 @Slf4j
 public class StockCalculateServiceImpl implements StockCalculateService {
-    @Autowired
+    @Resource
     private NiceApiService niceApiService;
-
-    @Autowired
+    @Resource
     private StockXService stockXService;
-
-    @Autowired
+    @Resource
     private CalculateConstants calculateConstants;
+    @Resource
+    private StockDao stockDao;
+
     private static DecimalFormat format = new DecimalFormat("0.00");
 
     @PostConstruct
@@ -43,7 +47,6 @@ public class StockCalculateServiceImpl implements StockCalculateService {
     }
 
 
-
     @Override
     public List<StockCalculatedRef> calculateDiff() {
         List<StockCalculatedRef> result = Lists.newArrayList();
@@ -52,14 +55,7 @@ public class StockCalculateServiceImpl implements StockCalculateService {
         int count = 0;
         System.out.println("topNice size: " + top100Nice.size());
         for(NiceShoeListModel niceModel : top100Nice){
-            System.out.println("Sleep " + niceModel.getSku());
-            try {
-                Thread.sleep(3000);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-
-            niceModel = niceApiService.getProductDetail(niceModel);
+             niceModel = niceApiService.getProductDetail(niceModel);
             if(null == niceModel){
                 continue;
             }
@@ -100,10 +96,9 @@ public class StockCalculateServiceImpl implements StockCalculateService {
                             ref.setDesc(stockNice.getDesc());
                             ref.setImgUrl(niceModel.getCover());
                             ref.setName(niceModel.getName());
-
-                            System.out.println(ref);
-
                             result.add(ref);
+
+                            stockDao.insert(ref.buildStockModel());
                         }
                     }
                 }
@@ -113,6 +108,8 @@ public class StockCalculateServiceImpl implements StockCalculateService {
         }
 
         log.info("[calculateDiff] result: {}", result);
+        saveToExcel(result);
+
         return result;
     }
 
@@ -162,7 +159,8 @@ public class StockCalculateServiceImpl implements StockCalculateService {
 //        }
 
         try {
-            FileOutputStream fileOut = new FileOutputStream("/Users/didi/bestbuy/bestbuy.xlsx");
+            String name = "./bestbuy/bestbuy_" + System.currentTimeMillis() + ".xlsx";
+            FileOutputStream fileOut = new FileOutputStream(name);
             workbook.write(fileOut);
             fileOut.close();
         } catch (IOException e) {
@@ -170,7 +168,6 @@ public class StockCalculateServiceImpl implements StockCalculateService {
         }
     }
 
-    // TODO
     private List<StockCalculatedRef> loadFromExcel(String path) {
         return null;
     }
