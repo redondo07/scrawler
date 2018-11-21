@@ -21,6 +21,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.text.DecimalFormat;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -38,7 +39,7 @@ public class StockCalculateServiceImpl implements StockCalculateService {
 
     private static DecimalFormat format = new DecimalFormat("0.00");
 
-   //  @PostConstruct
+    @PostConstruct
     private void init(){
         List<StockCalculatedRef> result = this.calculateDiff();
         log.info("can buy: {}", result);
@@ -52,10 +53,14 @@ public class StockCalculateServiceImpl implements StockCalculateService {
         List<StockCalculatedRef> result = Lists.newArrayList();
 
         List<NiceShoeListModel> top100Nice = niceApiService.getProductList();
+
+        List<NiceSaleListModel> saleList = niceApiService.getSaleList();
+        List<NiceSaleListModel> needToSearch = Lists.newArrayList();
+
         int count = 0;
         System.out.println("topNice size: " + top100Nice.size());
         for(NiceShoeListModel niceModel : top100Nice){
-             niceModel = niceApiService.getProductDetail(niceModel);
+            niceModel = niceApiService.getProductDetail(niceModel);
             if(null == niceModel){
                 continue;
             }
@@ -66,6 +71,65 @@ public class StockCalculateServiceImpl implements StockCalculateService {
                 continue;
             }
 
+            boolean searched = false;
+            List<String> foundSkus = Lists.newArrayList();
+            for(NiceSaleListModel saleModel : saleList){
+                if(saleModel.getSku().equalsIgnoreCase(niceModel.getSku())){
+                    searched = true;
+
+                    SizeChartEnum sizeEnum = SizeChartEnum.getBySizeEU(saleModel.getSize());
+                    if(null == sizeEnum){
+                        break;
+                    }
+
+                    StockXStockInfo stockInfo = stockXModel.getStocks().get(sizeEnum);
+
+                    StockCalculatedRef ref = new StockCalculatedRef();
+                    ref.setName(saleModel.getName());
+                    ref.setImgUrl(saleModel.getCover());
+                    ref.setSizeUS(sizeEnum.getSizeUS());
+                    ref.setSizeEU(sizeEnum.getSizeEU());
+                    ref.setSku(saleModel.getSku());
+                    ref.setCalculatedNicePriceRmb(saleModel.getSalePrice());
+                    ref.setSalePrice(saleModel.getSalePrice());
+                    result.add(ref);
+
+                    if(null == stockInfo) {
+                        ref.setStatus("stockX已无货， 需要下架");
+                        continue;
+                    }
+
+                    Double calculatedStockXPriceRmb = calculateConstants.getCalculatedStockXPriceRmb(stockInfo.getAmount());
+                    BigDecimal profitRate = CalculateConstants.calculateProfitRate(saleModel.getSalePrice(), calculatedStockXPriceRmb);
+                    ref.setProfitRate(profitRate.doubleValue());
+                    ref.setCalculateStockXPriceRmb(calculatedStockXPriceRmb);
+                    ref.setPriceStockX(stockInfo.getAmount());
+                    ref.setNewProfit(saleModel.getSalePrice() - calculatedStockXPriceRmb);
+
+                    if(profitRate.compareTo(BigDecimal.valueOf(calculateConstants.getProfitRate())) < 0){
+                        ref.setStatus("价格变动，需要下架");
+                    } else{
+                        ref.setStatus("正常");
+                    }
+
+                    foundSkus.add(niceModel.getSku());
+                }
+            }
+
+            Iterator<NiceSaleListModel> iter = saleList.iterator();
+            while(iter.hasNext()){
+                NiceSaleListModel saleItem = iter.next();
+                for(String foundSku : foundSkus){
+                    if(saleItem.getSku().equalsIgnoreCase(foundSku)){
+                        iter.remove();
+                    }
+                }
+            }
+
+            if(searched){
+                continue;
+            }
+
             for(Map.Entry<SizeChartEnum, NiceStockInfo> entry : niceModel.getStocks().entrySet()){
                 SizeChartEnum sizeEnum = entry.getKey();
                 NiceStockInfo stockNice = entry.getValue();
@@ -73,13 +137,11 @@ public class StockCalculateServiceImpl implements StockCalculateService {
                 StockXStockInfo stockStockX = stockXModel.getStocks().get(sizeEnum);
 
                 if(null != stockStockX){
-                    Double calculatedStockXPrice = (stockStockX.getAmount() + calculateConstants.getShippingAndTaxUSD()) * calculateConstants.getCurrency();
-                    Double calculatedNicePrice = (stockNice.getPrice() - 10d) * 0.95d;
+                    Double calculatedStockXPrice = calculateConstants.getCalculatedStockXPriceRmb(stockStockX.getAmount());
+                    Double calculatedNicePrice = calculateConstants.getCalculatedNicePrice(stockNice.getPrice());
 
                     if(calculatedNicePrice > calculatedStockXPrice){
-                        BigDecimal profitRate = new BigDecimal(
-                                format.format((calculatedNicePrice - calculatedStockXPrice) / calculatedStockXPrice))
-                                .setScale(2);
+                        BigDecimal profitRate = CalculateConstants.calculateProfitRate(calculatedNicePrice, calculatedStockXPrice);
 
                         if(profitRate.compareTo(BigDecimal.valueOf(calculateConstants.getProfitRate())) > 0 &&
                                 profitRate.compareTo(BigDecimal.ONE) < 0){
@@ -98,7 +160,7 @@ public class StockCalculateServiceImpl implements StockCalculateService {
                             ref.setName(niceModel.getName());
                             result.add(ref);
 
-                            stockDao.insert(ref.buildStockModel());
+                            // stockDao.insert(ref.buildStockModel());
                         }
                     }
                 }
@@ -107,6 +169,45 @@ public class StockCalculateServiceImpl implements StockCalculateService {
             System.out.println("Wake up " + count++);
         }
 
+        // search left items
+        for(NiceSaleListModel saleModel : saleList){
+            StockXShoeListModel stockXModel = stockXService.searchItem(saleModel.getSku());
+
+            stockXModel = stockXService.getProductDetail(stockXModel);
+            StockCalculatedRef ref = new StockCalculatedRef();
+            ref.setName(saleModel.getName());
+            ref.setImgUrl(saleModel.getCover());
+            ref.setSizeEU(saleModel.getSize());
+            ref.setSku(saleModel.getSku());
+            ref.setCalculatedNicePriceRmb(saleModel.getSalePrice());
+            ref.setSalePrice(saleModel.getSalePrice());
+
+            result.add(ref);
+
+            if(null == stockXModel){
+                ref.setStatus("stockX已无货， 需要下架");
+            } else{
+                SizeChartEnum sizeEnum = SizeChartEnum.getBySizeEU(saleModel.getSize());
+
+                StockXStockInfo stockInfo = stockXModel.getStocks().get(sizeEnum);
+                if(null == stockInfo){
+                    ref.setStatus("stockX已无货， 需要下架");
+                } else{
+                    Double calculatedStockXPriceRmb = calculateConstants.getCalculatedStockXPriceRmb(stockInfo.getAmount());
+                    BigDecimal profitRate = CalculateConstants.calculateProfitRate(saleModel.getSalePrice(), calculatedStockXPriceRmb);
+                    ref.setProfitRate(profitRate.doubleValue());
+                    ref.setCalculateStockXPriceRmb(calculatedStockXPriceRmb);
+                    ref.setPriceStockX(stockInfo.getAmount());
+                    ref.setNewProfit(saleModel.getSalePrice() - calculatedStockXPriceRmb);
+
+                    if(profitRate.compareTo(BigDecimal.valueOf(calculateConstants.getProfitRate())) < 0){
+                        ref.setStatus("价格变动，需要下架");
+                    } else{
+                        ref.setStatus("正常");
+                    }
+                }
+            }
+        }
         log.info("[calculateDiff] result: {}", result);
         saveToExcel(result);
 
@@ -127,9 +228,8 @@ public class StockCalculateServiceImpl implements StockCalculateService {
         headerCellStyle.setFont(headerFont);
 
         Row headerRow = sheet.createRow(0);
-
         List<String> headers = Lists.newArrayList("name", "sku", "sizeUS", "sizeEU", "priceNice",
-                "priceStockX", "calculatedNicePriceRmb", "calculateStockXPriceRmb", "profit", "profitRate", "cover");
+                "priceStockX", "calculatedNicePriceRmb", "calculateStockXPriceRmb", "profit", "profitRate", "newProfit", "status", "salePrice", "cover");
         for(int i = 0; i < headers.size(); i++) {
             Cell cell = headerRow.createCell(i);
             cell.setCellValue(headers.get(i));
@@ -144,14 +244,16 @@ public class StockCalculateServiceImpl implements StockCalculateService {
             row.createCell(cellNum++).setCellValue(ref.getSku());
             row.createCell(cellNum++).setCellValue(ref.getSizeUS());
             row.createCell(cellNum++).setCellValue(ref.getSizeEU());
-            row.createCell(cellNum++).setCellValue(ref.getPriceNice());
-            row.createCell(cellNum++).setCellValue(ref.getPriceStockX());
-            row.createCell(cellNum++).setCellValue(ref.getCalculatedNicePriceRmb());
-            row.createCell(cellNum++).setCellValue(ref.getCalculateStockXPriceRmb());
-            row.createCell(cellNum++).setCellValue(ref.getProfit());
-            row.createCell(cellNum++).setCellValue(ref.getProfitRate());
+            row.createCell(cellNum++).setCellValue(null == ref.getPriceNice()? 0d : ref.getPriceNice());
+            row.createCell(cellNum++).setCellValue(null == ref.getPriceStockX()? 0d : ref.getPriceStockX());
+            row.createCell(cellNum++).setCellValue(null == ref.getCalculatedNicePriceRmb() ? 0d : ref.getCalculatedNicePriceRmb());
+            row.createCell(cellNum++).setCellValue(null == ref.getCalculateStockXPriceRmb() ? 0d : ref.getCalculateStockXPriceRmb());
+            row.createCell(cellNum++).setCellValue(null == ref.getProfit() ? 0d : ref.getProfit());
+            row.createCell(cellNum++).setCellValue(null == ref.getProfitRate() ? 0d : ref.getProfitRate());
+            row.createCell(cellNum++).setCellValue(null == ref.getNewProfit() ? 0d : ref.getNewProfit());
+            row.createCell(cellNum++).setCellValue(ref.getStatus());
+            row.createCell(cellNum++).setCellValue(null == ref.getSalePrice() ? 0d : ref.getSalePrice());
             row.createCell(cellNum++).setCellValue(ref.getImgUrl());
-
         }
 
 //        for(int i = 0; i < headers.size(); i++) {

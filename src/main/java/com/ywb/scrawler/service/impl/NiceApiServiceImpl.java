@@ -36,12 +36,12 @@ public class NiceApiServiceImpl implements NiceApiService {
     private RestTemplate restTemplate;
 
     private final Map<String, String> mapNextKeyToData = ImmutableMap.of(
-            "", "nice-sign-v1://c2a5fa96ae698a7007852148fad93532:9f96a260b56c26a3/{\"token\":\"8dvGFRNl8izMftPmiwfbPpiCwigS2NLL\",\"tab\":\"hot\",\"type\":\"Shoes\",\"categoryIds\":\"5\",\"nextkey\":\"\"}",
-            "20", "nice-sign-v1://9246f5ad2ed625e4e32d6908406af6dd:f1d1bf4cfca5a1c2/{\"token\":\"8dvGFRNl8izMftPmiwfbPpiCwigS2NLL\",\"tab\":\"hot\",\"type\":\"Shoes\",\"categoryIds\":\"5\",\"nextkey\":\"20\"}",
-            "40", "nice-sign-v1://6dea0c519cff8a45514521080184cded:4b0ce81b81cc40cf/{\"token\":\"8dvGFRNl8izMftPmiwfbPpiCwigS2NLL\",\"tab\":\"hot\",\"type\":\"Shoes\",\"categoryIds\":\"5\",\"nextkey\":\"40\"}");
-            // "60", "nice-sign-v1://dce31197157e81f3cbb8edc59785c9eb:4e1ba37e7609ce1b/{\"token\":\"8dvGFRNl8izMftPmiwfbPpiCwigS2NLL\",\"tab\":\"hot\",\"type\":\"Shoes\",\"categoryIds\":\"5\",\"nextkey\":\"60\"}");
+            "", "nice-sign-v1://1882c3ca9becbbf0937c7e6294f8e630:4c1941b83ebb5692/{\"token\":\"arQAiGVk839UoBT-CBeAPItmt-wneZEF\",\"tab\":\"hot\",\"type\":\"Shoes\",\"categoryIds\":\"5\",\"nextkey\":\"\"}",
+            "20", "nice-sign-v1://a253431fc88c5a6cb92cd93fe5585bf9:05fe5827867a3e85/{\"token\":\"arQAiGVk839UoBT-CBeAPItmt-wneZEF\",\"tab\":\"hot\",\"type\":\"Shoes\",\"categoryIds\":\"5\",\"nextkey\":\"20\"}",
+            "40", "nice-sign-v1://d652693d8fef89f2f2d5c3987e6ae0f7:d6a4538f2bbe98ef/{\"token\":\"arQAiGVk839UoBT-CBeAPItmt-wneZEF\",\"tab\":\"hot\",\"type\":\"Shoes\",\"categoryIds\":\"5\",\"nextkey\":\"40\"}",
+            "60", "nice-sign-v1://149711e9805e15370aa2ef12ef97d138:3f91ec22440e3086/{\"token\":\"arQAiGVk839UoBT-CBeAPItmt-wneZEF\",\"tab\":\"hot\",\"type\":\"Shoes\",\"categoryIds\":\"5\",\"nextkey\":\"60\"}");
 
-    @PostConstruct
+    // @PostConstruct
     private void init() {
         // get all products
         List<NiceSaleListModel> models = this.getSaleList();
@@ -122,7 +122,7 @@ public class NiceApiServiceImpl implements NiceApiService {
                         JSONObject goodInfo = item.getJSONObject("goods_info");
                         model.setCover(goodInfo.getString("cover"));
                         model.setName(goodInfo.getString("name"));
-                        model.setSize(goodInfo.getString("size"));
+                        model.setSize(goodInfo.getString("size").replace("码", ""));
                         model.setSku(goodInfo.getString("sku"));
                         model.setSalePrice(item.getDouble("price"));
 
@@ -243,7 +243,7 @@ public class NiceApiServiceImpl implements NiceApiService {
 
         for(Map.Entry<String, String> entry : mapNextKeyToData.entrySet()){
             HttpEntity<String> entity = new HttpEntity<>(entry.getValue(), headers);
-            ResponseEntity<String> resp = restTemplate.exchange("http://api.oneniceapp.com/product/listTab?abroad=no&appv=5.2.14.20&did=eeb4f168016f955f9ebe4365f4f63656&dn=Wenbiao%E7%9A%84%20iPhone&dt=iPhone10%2C3&geoacc=11&im=52DDFF9C-6CFE-4D53-AE78-56091BAD8269&la=cn&lm=weixin&lp=-1.000000&net=0-0-wifi&osn=iOS&osv=12.1&seid=f3d7675ce55ab0c8c1baeb1d49aec0d4&sh=812.000000&sw=375.000000&token=8dvGFRNl8izMftPmiwfbPpiCwigS2NLL&ts=1542535786813",
+            ResponseEntity<String> resp = restTemplate.exchange("http://api.oneniceapp.com/product/listTab?abroad=no&amap_latitude=40.043895&amap_longitude=116.289610&appv=5.2.14.20&ch=AppStore_5.2.14.20&did=eeb4f168016f955f9ebe4365f4f63656&dn=Wenbiao%E7%9A%84%20iPhone&dt=iPhone10%2C3&geoacc=10&im=52DDFF9C-6CFE-4D53-AE78-56091BAD8269&la=cn&latitude=40.042652&lm=mobile&longitude=116.283545&lp=-1.000000&net=0-0-wifi&osn=iOS&osv=12.1&seid=cbbd6f2700ee84d9580f0e3a11c43d80&sh=812.000000&sw=375.000000&token=arQAiGVk839UoBT-CBeAPItmt-wneZEF&ts=1542801272367",
                     HttpMethod.POST, entity, String.class);
 
             JSONObject json = JSONObject.parseObject(resp.getBody());

@@ -24,6 +24,11 @@ public class StockCalculatedRef {
     private String imgUrl;
     private String desc;
 
+    // onsale部分
+    private Double newProfit;
+    private String status; // 需下架，需调整价格，正常
+    private Double salePrice;
+
     public Stock buildStockModel() {
         Stock stock = new Stock();
         stock.setName(name);
