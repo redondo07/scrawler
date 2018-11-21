@@ -7,4 +7,6 @@ public interface StockDao {
 
     Stock selectStock(@Param("id")Long id);
 
+    void insert(Stock stock);
+
 }

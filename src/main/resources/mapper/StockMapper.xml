@@ -8,5 +8,12 @@
         where id = #{id}
     </select>
 
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id" parameterType="com.ywb.scrawler.model.Stock">
+        insert into stock(name, cover, sku, size_US, size_EU, price_nice, price_stockX, calculated_nice_price_rmb,
+                          calculated_stockX_price_rmb, profit, profit_rate, update_time, create_time)
+        values(#{name}, #{cover}, #{sku}, #{sizeUS}, #{sizeEU}, #{priceNice}, #{priceStockX}, #{calculatedNicePriceRmb},
+               #{calculatedStockXPriceRmb}, #{profit}, #{profitRate}, #{updateTime}, #{createTime})
+    </insert>
+
 
 </mapper>
