@@ -32,7 +32,12 @@ public class CalculateConstants {
         return (stockXAmount + this.shippingAndTaxUSD) * this.currency;
     }
 
-    public Double getCalculatedNicePrice(Double nicePrice){
-        return (nicePrice - 10d) * 0.95d;
+    public static Double getCalculatedNicePrice(Double nicePrice){
+        return (nicePrice - 10d) * 0.98d;
     }
+
+    public static Double getSuggestNicePrice(Double nicePrice, Double stockXPriceRmb){
+        return nicePrice - (nicePrice - stockXPriceRmb) * 0.1d;
+    }
+
 }

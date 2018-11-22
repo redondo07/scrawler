@@ -16,5 +16,6 @@ public class StockXShoeListModel {
     private String release_date;
     private String colorway;
     private String objectID;
+    private String children;
     private Map<SizeChartEnum, StockXStockInfo> stocks;
 }

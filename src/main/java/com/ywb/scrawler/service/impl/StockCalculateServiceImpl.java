@@ -55,7 +55,6 @@ public class StockCalculateServiceImpl implements StockCalculateService {
         List<NiceShoeListModel> top100Nice = niceApiService.getProductList();
 
         List<NiceSaleListModel> saleList = niceApiService.getSaleList();
-        List<NiceSaleListModel> needToSearch = Lists.newArrayList();
 
         int count = 0;
         System.out.println("topNice size: " + top100Nice.size());
@@ -76,6 +75,7 @@ public class StockCalculateServiceImpl implements StockCalculateService {
             for(NiceSaleListModel saleModel : saleList){
                 if(saleModel.getSku().equalsIgnoreCase(niceModel.getSku())){
                     searched = true;
+                    foundSkus.add(niceModel.getSku());
 
                     SizeChartEnum sizeEnum = SizeChartEnum.getBySizeEU(saleModel.getSize());
                     if(null == sizeEnum){
@@ -112,21 +112,20 @@ public class StockCalculateServiceImpl implements StockCalculateService {
                         ref.setStatus("正常");
                     }
 
-                    foundSkus.add(niceModel.getSku());
-                }
-            }
-
-            Iterator<NiceSaleListModel> iter = saleList.iterator();
-            while(iter.hasNext()){
-                NiceSaleListModel saleItem = iter.next();
-                for(String foundSku : foundSkus){
-                    if(saleItem.getSku().equalsIgnoreCase(foundSku)){
-                        iter.remove();
-                    }
                 }
             }
 
             if(searched){
+                Iterator<NiceSaleListModel> iter = saleList.iterator();
+                while(iter.hasNext()){
+                    NiceSaleListModel saleItem = iter.next();
+                    for(String foundSku : foundSkus){
+                        if(saleItem.getSku().equalsIgnoreCase(foundSku)){
+                            iter.remove();
+                        }
+                    }
+                }
+
                 continue;
             }
 
@@ -138,10 +137,11 @@ public class StockCalculateServiceImpl implements StockCalculateService {
 
                 if(null != stockStockX){
                     Double calculatedStockXPrice = calculateConstants.getCalculatedStockXPriceRmb(stockStockX.getAmount());
-                    Double calculatedNicePrice = calculateConstants.getCalculatedNicePrice(stockNice.getPrice());
+                    Double calculatedNicePrice = CalculateConstants.getCalculatedNicePrice(stockNice.getPrice());
+                    Double suggestPrice = CalculateConstants.getSuggestNicePrice(calculatedNicePrice, calculatedStockXPrice);
 
                     if(calculatedNicePrice > calculatedStockXPrice){
-                        BigDecimal profitRate = CalculateConstants.calculateProfitRate(calculatedNicePrice, calculatedStockXPrice);
+                        BigDecimal profitRate = CalculateConstants.calculateProfitRate(suggestPrice, calculatedStockXPrice);
 
                         if(profitRate.compareTo(BigDecimal.valueOf(calculateConstants.getProfitRate())) > 0 &&
                                 profitRate.compareTo(BigDecimal.ONE) < 0){
@@ -149,9 +149,9 @@ public class StockCalculateServiceImpl implements StockCalculateService {
                             ref.setSku(niceModel.getSku());
                             ref.setCalculateStockXPriceRmb(calculatedStockXPrice);
                             ref.setPriceNice(stockNice.getPrice());
-                            ref.setCalculatedNicePriceRmb(calculatedNicePrice);
+                            ref.setCalculatedNicePriceRmb(suggestPrice);
                             ref.setPriceStockX(stockStockX.getAmount());
-                            ref.setProfit(stockNice.getPrice() - calculatedStockXPrice);
+                            ref.setProfit(suggestPrice - calculatedStockXPrice);
                             ref.setProfitRate(profitRate.doubleValue());
                             ref.setSizeEU(sizeEnum.getSizeEU());
                             ref.setSizeUS(sizeEnum.getSizeUS());
@@ -261,7 +261,7 @@ public class StockCalculateServiceImpl implements StockCalculateService {
 //        }
 
         try {
-            String name = "/Users/wbyin/bestbuy/bestbuy_" + System.currentTimeMillis() + ".xlsx";
+            String name = "./bestbuy/bestbuy_" + System.currentTimeMillis() + ".xlsx";
             FileOutputStream fileOut = new FileOutputStream(name);
             workbook.write(fileOut);
             fileOut.close();
