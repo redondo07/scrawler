@@ -11,4 +11,5 @@ public class StockXStockInfo {
     private String size;
     private Double amount;
     private int state;
+    private String dateStr;
 }

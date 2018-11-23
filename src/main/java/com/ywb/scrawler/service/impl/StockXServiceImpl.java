@@ -22,6 +22,8 @@ import javax.annotation.PostConstruct;
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URLEncoder;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
@@ -30,6 +32,9 @@ import java.util.Map;
 public class StockXServiceImpl implements StockXService {
     @Autowired
     private RestTemplate restTemplate;
+
+    private static SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
+
 
     // @PostConstruct
     private void init(){
@@ -59,7 +64,7 @@ public class StockXServiceImpl implements StockXService {
             HttpEntity<String> entity = new HttpEntity<>("", headers);
             StringBuffer paramsUrl = new StringBuffer("https://gateway.stockx.com/api/v2/products/");
             paramsUrl.append(model.getObjectID());
-            paramsUrl.append("/activity?state=480&page=1&sort=createdAt&limit=30&order=DESC&currency=USD");
+            paramsUrl.append("/activity?state=480&page=1&sort=createdAt&limit=60&order=DESC&currency=USD");
 
             URI uri = URI.create(paramsUrl.toString());
             ResponseEntity<String> resp = restTemplate.exchange(uri, HttpMethod.GET, entity, String.class);
@@ -74,13 +79,14 @@ public class StockXServiceImpl implements StockXService {
                 stockInfo.setSize(stock.getString("shoeSize"));
                 stockInfo.setState(stock.getInteger("state"));
                 stockInfo.setAmount(stock.getDouble("amount"));
+                stockInfo.setDateStr(stock.getString("createdAt"));
 
                 SizeChartEnum sizeEnum =  SizeChartEnum.getBySizeUS(stockInfo.getSize());
                 if(null == sizeEnum){
                     continue;
                 }
                 if(null != stocks.get(sizeEnum)){
-                    if(stocks.get(sizeEnum).getAmount() > stockInfo.getAmount()){
+                    if(formatter.parse(stockInfo.getDateStr()).after(formatter.parse(stocks.get(sizeEnum).getDateStr()))) {
                         log.info("duplicate key and replace, stock: {}, stockInMap: {}", stockInfo, stocks.get(sizeEnum));
                         stocks.put(sizeEnum, stockInfo);
                     } else {
@@ -128,6 +134,7 @@ public class StockXServiceImpl implements StockXService {
                 JSONObject hit = hits.getJSONObject(0);
                 String styleId = hit.getString("style_id").replace("-", " ");
                 if(!styleId.equalsIgnoreCase(sku)){
+                    log.error("[searchItem] not match, sku: {}, styleId: {}", sku, styleId);
                     return null;
                 }
                 StockXShoeListModel model = new StockXShoeListModel();
@@ -138,18 +145,21 @@ public class StockXServiceImpl implements StockXService {
                 model.setObjectID(hit.getString("objectID"));
 
                 if(Strings.isNullOrEmpty(model.getObjectID())){
-                    log.info("[searchItem] objectId is null, sku: {}", sku);
+                    log.error("[searchItem] objectId is null, sku: {}", sku);
                     return null;
                 }
                 return model;
             }
         } catch (Exception e){
-            log.error("[searchItem] e: ", e);
+            log.error("[searchItem] error. sku: " + sku + ", e: ", e);
             count++;
             if(count < 3){
                 searchItem(sku);
             }
         }
+        log.error("[searchItem] object not found, sku: {}", sku);
+
         return null;
     }
+
 }
