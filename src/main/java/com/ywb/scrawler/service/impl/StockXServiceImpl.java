@@ -58,13 +58,13 @@ public class StockXServiceImpl implements StockXService {
                 return null;
             }
             MultiValueMap<String, String> headers = new LinkedMultiValueMap();
-            headers.add("jwt-authorization", "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJzdG9ja3guY29tIiwic3ViIjoic3RvY2t4LmNvbSIsImF1ZCI6IndlYiIsImFwcF9uYW1lIjoiaW9zIiwiYXBwX3ZlcnNpb24iOiIzLjguNC4xNDcwNyIsImlzc3VlZF9hdCI6IjIwMTgtMTEtMjEgMTU6NTg6NTgiLCJjdXN0b21lcl9pZCI6IjQwOTU3MjMiLCJlbWFpbCI6InJlZG9uZG8uMTk4Njc5QGhvdG1haWwuY29tIiwiY3VzdG9tZXJfdXVpZCI6ImFiYTg3Yzg3LWVjN2YtMTFlOC04YWQzLTBhOTM4YjE4OTNhZSIsImZpcnN0TmFtZSI6IndlbmJpYW8iLCJsYXN0TmFtZSI6InlpbiIsImdkcHJfc3RhdHVzIjoiQUNDRVBURUQiLCJkZWZhdWx0X2N1cnJlbmN5IjoiVVNEIiwic2hpcF9ieV9kYXRlIjpudWxsLCJ2YWNhdGlvbl9kYXRlIjpudWxsLCJwcm9kdWN0X2NhdGVnb3J5Ijoic25lYWtlcnMiLCJpc19hZG1pbiI6IjAiLCJzZXNzaW9uX2lkIjoiMTI5Mzk2OTY4MTQ4NTU5Mjk1NzEiLCJleHAiOjE1NDM0MjA3MzgsImFwaV9rZXlzIjpbXX0.At1EoUAgQwnfls8URtfFLLjCMdQ4odReCkkF3-tStfk");
+            headers.add("jwt-authorization", "");
             headers.add("x-api-key", "99WtRZK6pS1Fqt8hXBfWq8BYQjErmwipa3a0hYxX");
 
             HttpEntity<String> entity = new HttpEntity<>("", headers);
             StringBuffer paramsUrl = new StringBuffer("https://gateway.stockx.com/api/v2/products/");
             paramsUrl.append(model.getObjectID());
-            paramsUrl.append("/activity?state=480&page=1&sort=createdAt&limit=60&order=DESC&currency=USD");
+            paramsUrl.append("/activity?state=480&page=1&sort=createdAt&limit=100&order=DESC&currency=USD");
 
             URI uri = URI.create(paramsUrl.toString());
             ResponseEntity<String> resp = restTemplate.exchange(uri, HttpMethod.GET, entity, String.class);
@@ -110,6 +110,83 @@ public class StockXServiceImpl implements StockXService {
 
         return null;
     }
+
+    @Override
+    public StockXShoeListModel getProductDetail2(StockXShoeListModel model) {
+        int count = 0;
+        try{
+            if(null == model || Strings.isNullOrEmpty(model.getObjectID())){
+                return null;
+            }
+            MultiValueMap<String, String> headers = new LinkedMultiValueMap();
+            headers.add("jwt-authorization", "");
+            headers.add("x-api-key", "99WtRZK6pS1Fqt8hXBfWq8BYQjErmwipa3a0hYxX");
+
+            HttpEntity<String> entity = new HttpEntity<>("", headers);
+            StringBuffer paramsUrl = new StringBuffer("https://gateway.stockx.com/api/v2/products/");
+            paramsUrl.append(model.getObjectID());
+            paramsUrl.append("?includes=market,360&currency=USD");
+
+            URI uri = URI.create(paramsUrl.toString());
+            ResponseEntity<String> resp = restTemplate.exchange(uri, HttpMethod.GET, entity, String.class);
+            JSONObject json = JSONObject.parseObject(resp.getBody());
+            log.info("[getProductDetail2] sku: {}, objectId: {}, result: {}", model.getSku(), model.getObjectID(), resp.getBody());
+            JSONObject stocksJson = json.getJSONObject("Product").getJSONObject("children");
+
+            Map<SizeChartEnum, StockXStockInfo> stocks = Maps.newHashMap();
+
+            for(String key : stocksJson.keySet()) {
+                JSONObject stock = stocksJson.getJSONObject(key);
+                StockXStockInfo stockInfo = new StockXStockInfo();
+                stockInfo.setSize(stock.getString("shoeSize"));
+                stockInfo.setAmount(stock.getJSONObject("market").getDouble("lowestAsk"));
+                stockInfo.setDateStr(stock.getJSONObject("market").getString("createdAt"));
+
+                SizeChartEnum sizeEnum =  SizeChartEnum.getBySizeUS(stockInfo.getSize());
+                if(null != sizeEnum && stockInfo.getAmount() > 0d){
+                    stocks.put(sizeEnum, stockInfo);
+                }
+            }
+//            for (int i = 0; i < stocksJson.size(); i++) {
+//                JSONObject stock = stocksJson.getJSONObject(i);
+//
+//                StockXStockInfo stockInfo = new StockXStockInfo();
+//                stockInfo.setSize(stock.getString("shoeSize"));
+//                stockInfo.setState(stock.getInteger("state"));
+//                stockInfo.setAmount(stock.getDouble("amount"));
+//                stockInfo.setDateStr(stock.getString("createdAt"));
+//
+//                SizeChartEnum sizeEnum =  SizeChartEnum.getBySizeUS(stockInfo.getSize());
+//                if(null == sizeEnum){
+//                    continue;
+//                }
+//                if(null != stocks.get(sizeEnum)){
+//                    if(formatter.parse(stockInfo.getDateStr()).after(formatter.parse(stocks.get(sizeEnum).getDateStr()))) {
+//                        log.info("duplicate key and replace, stock: {}, stockInMap: {}", stockInfo, stocks.get(sizeEnum));
+//                        stocks.put(sizeEnum, stockInfo);
+//                    } else {
+//                        log.info("duplicate key, stock: {}, stockInMap: {}", stockInfo, stocks.get(sizeEnum));
+//                    }
+//                } else{
+//                    stocks.put(sizeEnum, stockInfo);
+//                }
+//            }
+            model.setStocks(stocks);
+
+            System.out.println(model.getStocks());
+            log.info("searched objectId: {}, sku: {}, model: {}", model.getObjectID(), model.getSku(), model);
+            return model;
+        } catch (Exception e){
+            log.error("[getProductDetail] e: ", e);
+            count++;
+            if(count < 3){
+                getProductDetail(model);
+            }
+        }
+
+        return null;
+    }
+
 
     @Override
     public StockXShoeListModel searchItem(String sku) {

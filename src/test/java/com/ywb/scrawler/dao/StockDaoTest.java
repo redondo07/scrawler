@@ -17,8 +17,8 @@ public class StockDaoTest {
 
     @Test
     public void selectStockTest() {
-        Stock stock = stockDao.selectStock(1L);
-        System.out.println(stock.getName());
+        // Stock stock = stockDao.selectStock(1L);
+        // System.out.println(stock.getName());
     }
 
 }

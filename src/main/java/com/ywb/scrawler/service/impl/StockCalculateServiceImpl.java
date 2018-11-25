@@ -39,17 +39,17 @@ public class StockCalculateServiceImpl implements StockCalculateService {
 
     private static DecimalFormat format = new DecimalFormat("0.00");
 
-    @PostConstruct
+    // @PostConstruct
     private void init(){
-        List<StockCalculatedRef> result = this.calculateDiff();
-        log.info("can buy: {}", result);
+//        List<StockCalculatedRef> result = this.calculateDiff();
+//        log.info("can buy: {}", result);
 
-        saveToExcel(result);
+        // saveToExcel(result);
     }
 
 
     @Override
-    public List<StockCalculatedRef> calculateDiff() {
+    public List<StockCalculatedRef> calculateDiff(long timeStamp) {
         List<StockCalculatedRef> result = Lists.newArrayList();
 
         List<NiceShoeListModel> top100Nice = niceApiService.getProductList();
@@ -64,7 +64,7 @@ public class StockCalculateServiceImpl implements StockCalculateService {
                 continue;
             }
             StockXShoeListModel stockXModel = stockXService.searchItem(niceModel.getSku());
-            stockXModel = stockXService.getProductDetail(stockXModel);
+            stockXModel = stockXService.getProductDetail2(stockXModel);
 
             if(null == stockXModel){
                 continue;
@@ -122,6 +122,7 @@ public class StockCalculateServiceImpl implements StockCalculateService {
                     for(String foundSku : foundSkus){
                         if(saleItem.getSku().equalsIgnoreCase(foundSku)){
                             iter.remove();
+                            break;
                         }
                     }
                 }
@@ -209,12 +210,12 @@ public class StockCalculateServiceImpl implements StockCalculateService {
             }
         }
         log.info("[calculateDiff] result: {}", result);
-        //saveToExcel(result);
+        saveToExcel(result, timeStamp);
 
         return result;
     }
 
-    private void saveToExcel(List<StockCalculatedRef> refs) {
+    private void saveToExcel(List<StockCalculatedRef> refs, long timeStamp) {
         Workbook workbook = new XSSFWorkbook();
         // CreationHelper createHelper = workbook.getCreationHelper();
         Sheet sheet = workbook.createSheet("bestbuy");
@@ -261,7 +262,7 @@ public class StockCalculateServiceImpl implements StockCalculateService {
 //        }
 
         try {
-            String name = "./bestbuy/bestbuy_" + System.currentTimeMillis() + ".xlsx";
+            String name = "/Users/wbyin/bestbuy/bestbuy_" + timeStamp + ".xlsx";
             FileOutputStream fileOut = new FileOutputStream(name);
             workbook.write(fileOut);
             fileOut.close();

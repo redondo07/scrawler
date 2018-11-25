@@ -9,5 +9,7 @@ public interface StockXService {
 
     StockXShoeListModel getProductDetail(StockXShoeListModel model);
 
+    StockXShoeListModel getProductDetail2(StockXShoeListModel model);
+
     StockXShoeListModel searchItem(String sku);
 }

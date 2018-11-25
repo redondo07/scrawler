@@ -1,6 +1,7 @@
 package com.ywb.scrawler.service;
 
 import com.google.common.collect.Lists;
+import com.ywb.scrawler.model.NiceSaleListModel;
 import com.ywb.scrawler.model.NiceShoeListModel;
 import com.ywb.scrawler.model.NiceStockInfo;
 import org.jsoup.Connection;
@@ -15,8 +16,8 @@ import java.util.List;
 @Component
 public class NiceStockInfoPageService {
 
-    public List<NiceStockInfo> getStockInfoByGoodsId(String goodsId) {
-        List<NiceStockInfo> stocks = Lists.newArrayList();
+    public List<NiceSaleListModel> getStockInfoByGoodsId(String goodsId) {
+        List<NiceSaleListModel> stocks = Lists.newArrayList();
         String url = "https://m.oneniceapp.com/sneakersale/stockinfos?goods_id=" + goodsId;
         try {
             String html = getConnection(url).execute().body();
@@ -24,21 +25,25 @@ public class NiceStockInfoPageService {
             for (Element e : elements) {
                 Elements spans = e.select("span");
 
-                NiceStockInfo model = new NiceStockInfo();
-                model.setSize(spans.select("span.sizeItemSize").get(0).childNode(0).toString());
-                model.setUnit(spans.select("span.sizeItemPrice").get(0).childNode(0).toString());
-                model.setPrice(Double.valueOf(spans.select("span.sizeItemPrice").get(0).childNode(1).toString()));
-                model.setDesc(spans.select("span.sizeItemBtn").get(0).childNode(0).toString());
-
-                Integer stock = 0;
-                try {
-                    stock =  Integer.valueOf(spans.select("span.sizeItemNum").get(0).childNode(0).toString());
-                } catch (NumberFormatException e1) {
-                    System.out.println("库存不为数字。。");
-                    stock = 0;
-                }
-                model.setStock(stock);
-                stocks.add(model);
+                NiceSaleListModel saleModel = new NiceSaleListModel();
+                saleModel.setSalePrice(Double.valueOf(spans.select("span.sizeItemPrice").get(0).childNode(1).toString()));
+                saleModel.setSize(spans.select("span.sizeItemSize").get(0).childNode(0).toString().replace("码", ""));
+//
+//                NiceStockInfo model = new NiceStockInfo();
+//                model.setSize(spans.select("span.sizeItemSize").get(0).childNode(0).toString());
+//                model.setUnit(spans.select("span.sizeItemPrice").get(0).childNode(0).toString());
+//                model.setPrice(Double.valueOf(spans.select("span.sizeItemPrice").get(0).childNode(1).toString()));
+//                model.setDesc(spans.select("span.sizeItemBtn").get(0).childNode(0).toString());
+//
+//                Integer stock = 0;
+//                try {
+//                    stock = Integer.valueOf(spans.select("span.sizeItemNum").get(0).childNode(0).toString());
+//                } catch (NumberFormatException e1) {
+//                    System.out.println("库存不为数字。。");
+//                    stock = 0;
+//                }
+//                model.setStock(stock);
+                stocks.add(saleModel);
             }
 
         } catch (IOException e) {

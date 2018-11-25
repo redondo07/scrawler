@@ -10,21 +10,21 @@ import com.ywb.scrawler.enums.SizeChartEnum;
 import com.ywb.scrawler.model.NiceSaleListModel;
 import com.ywb.scrawler.model.NiceShoeListModel;
 import com.ywb.scrawler.model.NiceStockInfo;
-import com.ywb.scrawler.model.StockXStockInfo;
 import com.ywb.scrawler.service.NiceApiService;
+import com.ywb.scrawler.service.NiceStockInfoPageService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
+import org.springframework.mail.SimpleMailMessage;
+import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Component;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
 
-import javax.annotation.PostConstruct;
-import java.net.URI;
 import java.util.List;
 import java.util.Map;
 
@@ -34,18 +34,14 @@ public class NiceApiServiceImpl implements NiceApiService {
 
     @Autowired
     private RestTemplate restTemplate;
+    @Autowired
+    private NiceStockInfoPageService niceStockInfoPageService;
 
     private final Map<String, String> mapNextKeyToData = ImmutableMap.of(
             "", "nice-sign-v1://1882c3ca9becbbf0937c7e6294f8e630:4c1941b83ebb5692/{\"token\":\"arQAiGVk839UoBT-CBeAPItmt-wneZEF\",\"tab\":\"hot\",\"type\":\"Shoes\",\"categoryIds\":\"5\",\"nextkey\":\"\"}",
             "20", "nice-sign-v1://a253431fc88c5a6cb92cd93fe5585bf9:05fe5827867a3e85/{\"token\":\"arQAiGVk839UoBT-CBeAPItmt-wneZEF\",\"tab\":\"hot\",\"type\":\"Shoes\",\"categoryIds\":\"5\",\"nextkey\":\"20\"}",
             "40", "nice-sign-v1://d652693d8fef89f2f2d5c3987e6ae0f7:d6a4538f2bbe98ef/{\"token\":\"arQAiGVk839UoBT-CBeAPItmt-wneZEF\",\"tab\":\"hot\",\"type\":\"Shoes\",\"categoryIds\":\"5\",\"nextkey\":\"40\"}",
             "60", "nice-sign-v1://149711e9805e15370aa2ef12ef97d138:3f91ec22440e3086/{\"token\":\"arQAiGVk839UoBT-CBeAPItmt-wneZEF\",\"tab\":\"hot\",\"type\":\"Shoes\",\"categoryIds\":\"5\",\"nextkey\":\"60\"}");
-
-    // @PostConstruct
-    private void init() {
-        // get all products
-        List<NiceSaleListModel> models = this.getSaleList();
-    }
 
     @Override
     public NiceShoeListModel getProductDetail(NiceShoeListModel model) {
@@ -115,8 +111,17 @@ public class NiceApiServiceImpl implements NiceApiService {
 
                     // text不为空，表示有多个产品
                     if(!Strings.isNullOrEmpty(item.getString("text"))) {
-                        // TODO 爬取html获取多个尺码商品价格
+                        JSONObject goodInfo = item.getJSONObject("goods_info");
 
+                        // 爬取html获取多个尺码商品价格
+                        List<NiceSaleListModel> models = niceStockInfoPageService.getStockInfoByGoodsId(goodInfo.getString("id"));
+                        for(NiceSaleListModel model : models){
+                            model.setCover(goodInfo.getString("cover"));
+                            model.setName(goodInfo.getString("name"));
+                            model.setSku(goodInfo.getString("sku"));
+                        }
+
+                        result.addAll(models);
                     } else {
                         NiceSaleListModel model = new NiceSaleListModel();
                         JSONObject goodInfo = item.getJSONObject("goods_info");
