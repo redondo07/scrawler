@@ -11,16 +11,12 @@ import com.ywb.scrawler.service.StockXService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import javax.annotation.PostConstruct;
 import javax.annotation.Resource;
-import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.math.BigDecimal;
-import java.text.DecimalFormat;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -37,17 +33,6 @@ public class StockCalculateServiceImpl implements StockCalculateService {
     @Resource
     private StockDao stockDao;
 
-    private static DecimalFormat format = new DecimalFormat("0.00");
-
-    // @PostConstruct
-    private void init(){
-//        List<StockCalculatedRef> result = this.calculateDiff();
-//        log.info("can buy: {}", result);
-
-        // saveToExcel(result);
-    }
-
-
     @Override
     public List<StockCalculatedRef> calculateDiff(long timeStamp) {
         List<StockCalculatedRef> result = Lists.newArrayList();
@@ -56,8 +41,9 @@ public class StockCalculateServiceImpl implements StockCalculateService {
 
         List<NiceSaleListModel> saleList = niceApiService.getSaleList();
 
-        int count = 0;
         System.out.println("topNice size: " + top100Nice.size());
+
+        int count = 0;
         for(NiceShoeListModel niceModel : top100Nice){
             niceModel = niceApiService.getProductDetail(niceModel);
             if(null == niceModel){
@@ -70,11 +56,11 @@ public class StockCalculateServiceImpl implements StockCalculateService {
                 continue;
             }
 
-            boolean searched = false;
+            boolean found = false;
             List<String> foundSkus = Lists.newArrayList();
             for(NiceSaleListModel saleModel : saleList){
                 if(saleModel.getSku().equalsIgnoreCase(niceModel.getSku())){
-                    searched = true;
+                    found = true;
                     foundSkus.add(niceModel.getSku());
 
                     SizeChartEnum sizeEnum = SizeChartEnum.getBySizeEU(saleModel.getSize());
@@ -101,21 +87,27 @@ public class StockCalculateServiceImpl implements StockCalculateService {
 
                     Double calculatedStockXPriceRmb = calculateConstants.getCalculatedStockXPriceRmb(stockInfo.getAmount());
                     BigDecimal profitRate = CalculateConstants.calculateProfitRate(saleModel.getSalePrice(), calculatedStockXPriceRmb);
+                    Double priceDiff = saleModel.getSalePrice() - calculatedStockXPriceRmb;
                     ref.setProfitRate(profitRate.doubleValue());
                     ref.setCalculateStockXPriceRmb(calculatedStockXPriceRmb);
                     ref.setPriceStockX(stockInfo.getAmount());
                     ref.setNewProfit(saleModel.getSalePrice() - calculatedStockXPriceRmb);
 
-                    if(profitRate.compareTo(BigDecimal.valueOf(calculateConstants.getProfitRate())) < 0){
+                    if(profitRate.compareTo(BigDecimal.valueOf(calculateConstants.getProfitRate())) < 0 &&
+                            priceDiff < 300d){
                         ref.setStatus("价格变动，需要下架");
                     } else{
-                        ref.setStatus("正常");
+                        NiceStockInfo niceLowestPrice = niceModel.getStocks().get(sizeEnum);
+                        if(null != niceLowestPrice && niceLowestPrice.getPrice() < saleModel.getSalePrice()){
+                            ref.setStatus("Nice有更低价，需要调整。 currentPrice: " + saleModel.getSalePrice() + ", lowestPrice: " + niceLowestPrice.getPrice());
+                        } else{
+                            ref.setStatus("正常");
+                        }
                     }
-
                 }
             }
 
-            if(searched){
+            if(found){
                 Iterator<NiceSaleListModel> iter = saleList.iterator();
                 while(iter.hasNext()){
                     NiceSaleListModel saleItem = iter.next();
@@ -140,12 +132,13 @@ public class StockCalculateServiceImpl implements StockCalculateService {
                     Double calculatedStockXPrice = calculateConstants.getCalculatedStockXPriceRmb(stockStockX.getAmount());
                     Double calculatedNicePrice = CalculateConstants.getCalculatedNicePrice(stockNice.getPrice());
                     Double suggestPrice = CalculateConstants.getSuggestNicePrice(calculatedNicePrice, calculatedStockXPrice);
+                    Double priceDiff = suggestPrice - calculatedStockXPrice;
 
                     if(calculatedNicePrice > calculatedStockXPrice){
                         BigDecimal profitRate = CalculateConstants.calculateProfitRate(suggestPrice, calculatedStockXPrice);
 
-                        if(profitRate.compareTo(BigDecimal.valueOf(calculateConstants.getProfitRate())) > 0 &&
-                                profitRate.compareTo(BigDecimal.ONE) < 0){
+                        if((profitRate.compareTo(BigDecimal.valueOf(calculateConstants.getProfitRate())) > 0 &&
+                                profitRate.compareTo(BigDecimal.ONE) < 0) || priceDiff >= 300d){
                             StockCalculatedRef ref = new StockCalculatedRef();
                             ref.setSku(niceModel.getSku());
                             ref.setCalculateStockXPriceRmb(calculatedStockXPrice);
@@ -196,12 +189,16 @@ public class StockCalculateServiceImpl implements StockCalculateService {
                 } else{
                     Double calculatedStockXPriceRmb = calculateConstants.getCalculatedStockXPriceRmb(stockInfo.getAmount());
                     BigDecimal profitRate = CalculateConstants.calculateProfitRate(saleModel.getSalePrice(), calculatedStockXPriceRmb);
+                    Double priceDiff = saleModel.getSalePrice() - calculatedStockXPriceRmb;
+
+
                     ref.setProfitRate(profitRate.doubleValue());
                     ref.setCalculateStockXPriceRmb(calculatedStockXPriceRmb);
                     ref.setPriceStockX(stockInfo.getAmount());
                     ref.setNewProfit(saleModel.getSalePrice() - calculatedStockXPriceRmb);
 
-                    if(profitRate.compareTo(BigDecimal.valueOf(calculateConstants.getProfitRate())) < 0){
+                    if(profitRate.compareTo(BigDecimal.valueOf(calculateConstants.getProfitRate())) < 0 &&
+                            priceDiff < 300){
                         ref.setStatus("价格变动，需要下架");
                     } else{
                         ref.setStatus("正常");
@@ -262,7 +259,7 @@ public class StockCalculateServiceImpl implements StockCalculateService {
 //        }
 
         try {
-            String name = "/Users/wbyin/bestbuy/bestbuy_" + timeStamp + ".xlsx";
+            String name = "/Users/didi/bestbuy/bestbuy_" + timeStamp + ".xlsx";
             FileOutputStream fileOut = new FileOutputStream(name);
             workbook.write(fileOut);
             fileOut.close();

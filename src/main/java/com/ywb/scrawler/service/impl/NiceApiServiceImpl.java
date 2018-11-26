@@ -51,7 +51,7 @@ public class NiceApiServiceImpl implements NiceApiService {
             JSONObject json = JSONObject.parseObject(resp.getBody());
             JSONArray stocksJson = json.getJSONObject("data").getJSONArray("stocks");
 
-            log.info("[getProductDetail] stocks: {}", stocksJson.toJSONString());
+            log.info("[getProductDetail] sku: {}, stocks: {}", model.getSku(), stocksJson.toJSONString());
 
             Map<SizeChartEnum, NiceStockInfo> stocks = Maps.newHashMap();
             for (int i = 0; i < stocksJson.size(); i++) {
