@@ -10,7 +10,7 @@
         <property name="log.dir" value="~/logs/scrawler"/>
     </springProfile>
     <springProfile name="prod">
-        <property name="log.dir" value="~/logs/scrawler"/>
+        <property name="log.dir" value="/home/scrawler/logs/scrawler"/>
     </springProfile>
     <springProfile name="pre">
         <property name="log.dir" value="~/logs/scrawler"/>
