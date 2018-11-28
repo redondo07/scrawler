@@ -259,7 +259,7 @@ public class StockCalculateServiceImpl implements StockCalculateService {
 //        }
 
         try {
-            String name = "/Users/didi/bestbuy/bestbuy_" + timeStamp + ".xlsx";
+            String name = "/home/scrawler/bestbuy/bestbuy_" + timeStamp + ".xlsx";
             FileOutputStream fileOut = new FileOutputStream(name);
             workbook.write(fileOut);
             fileOut.close();
