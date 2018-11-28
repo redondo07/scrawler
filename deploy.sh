@@ -26,7 +26,7 @@ action=$1
 case $action in
     "start" )
         # 启动服务
-		exec java -jar  -server -Dspring.profiles.active=prod -Xms1G -Xmx1G -XX:+DisableExplicitGC -XX:+UseG1GC -XX:MaxGCPauseMillis=500 -XX:+PrintGCDetails -XX:+PrintGCTimeStamps -XX:+PrintGCApplicationStoppedTime -XX:+PrintTenuringDistribution -XX:+PrintHeapAtGC -Djava.awt.headless=true -Xloggc:/home/scrawler/logs/gc.log -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/home/scrawler/logs -XX:ErrorFile=/home/scrawler/logs/hs_err_pid%p.log ${app}
+		nohup java -jar  -server -Dspring.profiles.active=prod -Xms1G -Xmx1G -XX:+DisableExplicitGC -XX:+UseG1GC -XX:MaxGCPauseMillis=500 -XX:+PrintGCDetails -XX:+PrintGCTimeStamps -XX:+PrintGCApplicationStoppedTime -XX:+PrintTenuringDistribution -XX:+PrintHeapAtGC -Djava.awt.headless=true -Xloggc:/home/scrawler/logs/gc.log -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/home/scrawler/logs -XX:ErrorFile=/home/scrawler/logs/hs_err_pid%p.log ${app} &
 		echo "App started"
         ;;
     * )
