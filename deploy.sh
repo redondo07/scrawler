@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+source /etc/profile
+
 git pull
 
 mvn clean package -Pprod -Dmaven.test.skip=true
