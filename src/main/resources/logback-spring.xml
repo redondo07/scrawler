@@ -4,7 +4,7 @@
 
     <!-- 设置日志输出根目录 -->
     <springProfile name="dev">
-        <property name="log.dir" value="/Users/didi/logs/scrawler"/>
+        <property name="log.dir" value="~/logs/scrawler"/>
     </springProfile>
     <springProfile name="qa">
         <property name="log.dir" value="~/logs/scrawler"/>
