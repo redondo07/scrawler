@@ -4,7 +4,6 @@ import com.ywb.scrawler.model.StockCalculatedRef;
 import com.ywb.scrawler.service.MailService;
 import com.ywb.scrawler.service.StockCalculateService;
 import com.ywb.scrawler.service.impl.MailServiceImpl;
-import com.ywb.scrawler.service.impl.NiceApiServiceImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
