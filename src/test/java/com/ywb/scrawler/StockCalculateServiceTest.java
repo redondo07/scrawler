@@ -8,6 +8,7 @@ import com.ywb.scrawler.model.StockXShoeListModel;
 import com.ywb.scrawler.service.*;
 import com.ywb.scrawler.service.impl.MailServiceImpl;
 import com.ywb.scrawler.service.impl.StockXServiceImpl;
+import com.ywb.scrawler.task.SchedulingTask;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,6 +36,13 @@ public class StockCalculateServiceTest {
     private StockXService stockXService;
     @Resource
     private MailService mailService;
+    @Autowired
+    private SchedulingTask task;
+
+    @Test
+    public void sendMailTest() {
+        task.calculateAndSendEmail();
+    }
 
     @Test
     public void calculateDiffTest() {
