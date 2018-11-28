@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+git pull
+
 mvn clean package -Pprod -Dmaven.test.skip=true
 ret=$?
 if [ $ret -ne 0 ];then
