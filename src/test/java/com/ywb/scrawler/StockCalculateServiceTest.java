@@ -43,6 +43,20 @@ public class StockCalculateServiceTest {
 
         System.out.println(result.size());
         System.out.println("[calculateDiffTest] calculate cost " + (System.currentTimeMillis() - start) + " ms.");
+
+        String[] to = new String[]{};
+        String fileName = "bestbuy_" + start + ".xlsx";
+        String filePath = "/Users/wbyin/bestbuy/" + fileName;
+        Date date = new Date();
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        String subject = "Recommendation -- " + sdf.format(date);
+        try {
+            mailService.sendAttachmentsMail(MailServiceImpl.toMails, subject, subject, filePath, MailServiceImpl.ccMails);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        // logger.info("[calculateAndSendEmail] end: {}", System.currentTimeMillis());
+
     }
 
     @Test
