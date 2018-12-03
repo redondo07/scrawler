@@ -209,6 +209,9 @@ public class StockXServiceImpl implements StockXService {
             JSONArray hits = json.getJSONArray("hits");
             if(null != hits && hits.size() >= 1){
                 JSONObject hit = hits.getJSONObject(0);
+                if(Strings.isNullOrEmpty(hit.getString("style_id"))){
+                    return null;
+                }
                 String styleId = hit.getString("style_id").replace("-", " ");
                 if(!styleId.equalsIgnoreCase(sku)){
                     log.error("[searchItem] not match, sku: {}, styleId: {}", sku, styleId);
