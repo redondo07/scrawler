@@ -259,7 +259,7 @@ public class StockCalculateServiceImpl implements StockCalculateService {
 //        }
 
         try {
-            String name = "/home/scrawler/bestbuy/bestbuy_" + timeStamp + ".xlsx";
+            String name = "/home/ubuntu/bestbuy/bestbuy_" + timeStamp + ".xlsx";
             FileOutputStream fileOut = new FileOutputStream(name);
             workbook.write(fileOut);
             fileOut.close();
@@ -268,22 +268,5 @@ public class StockCalculateServiceImpl implements StockCalculateService {
         }
     }
 
-    private List<StockCalculatedRef> loadFromExcel(String path) {
-        return null;
-    }
 
-    private List<StockCalculatedRef> findOutOfStockItems(List<StockCalculatedRef> itemsPosted, List<StockCalculatedRef> newItems) {
-
-        return null;
-    }
-
-    private List<StockCalculatedRef> findNewItems(List<StockCalculatedRef> itemsPosted, List<StockCalculatedRef> newItems) {
-
-        return null;
-    }
-
-    private List<StockCalculatedRef> findExistingItems(List<StockCalculatedRef> itemsPosted, List<StockCalculatedRef> newItems) {
-
-        return null;
-    }
 }

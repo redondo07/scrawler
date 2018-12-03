@@ -24,7 +24,7 @@ public class SchedulingTask {
     @Autowired
     MailService mailService;
 
-    @Scheduled(cron = "0 0/20 * * * *")
+    @Scheduled(cron = "0 0 0/1 * * *")
     public void calculateAndSendEmail(){
         logger.info("[calculateAndSendEmail] start: {}", System.currentTimeMillis());
         long ts = System.currentTimeMillis();
@@ -32,7 +32,7 @@ public class SchedulingTask {
 
         String[] to = new String[]{};
         String fileName = "bestbuy_" + ts + ".xlsx";
-        String filePath = "/home/scrawler/bestbuy/" + fileName;
+        String filePath = "/home/ubuntu/bestbuy/" + fileName;
         Date date = new Date();
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         String subject = "Recommendation -- " + sdf.format(date);
